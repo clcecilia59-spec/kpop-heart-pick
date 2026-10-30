@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f1eb">
+  <title>你的 K-pop 心动取向</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="app-shell" id="app">
+    <section class="screen intro-screen is-active" data-screen="intro" aria-labelledby="intro-title">
+      <div class="intro-art" aria-hidden="true">
+        <span class="spark spark-a">✦</span>
+        <span class="spark spark-b">✧</span>
+        <div class="portrait-stack portrait-stack-left"></div>
+        <div class="portrait-stack portrait-stack-center"></div>
+        <div class="portrait-stack portrait-stack-right"></div>
+      </div>
+      <p class="eyebrow">1 分钟心动实验</p>
+      <h1 id="intro-title">你的 K-pop<br>心动取向</h1>
+      <p class="intro-copy">凭第一眼感觉给 12 张造型打分。最后揭晓你的心动关键词，以及让你反复心动的那一种风格。</p>
+      <div class="intro-meta" aria-label="测试说明">
+        <span>12 张照片</span>
+        <span>隐藏身份</span>
+        <span>结果可重玩</span>
+      </div>
+      <button class="primary-button" type="button" data-action="start">开始心动测试</button>
+      <p class="fine-print">TREASURE 8 人试玩版 · 姓名将在结果页揭晓</p>
+    </section>
+
+    <section class="screen rating-screen" data-screen="rating" aria-labelledby="rating-title">
+      <header class="topbar">
+        <button class="icon-button" type="button" data-action="back" aria-label="返回上一张">←</button>
+        <div class="progress-wrap">
+          <div class="progress-label"><span id="progress-current">01</span><span>/ 12</span></div>
+          <div class="progress-track" role="progressbar" aria-label="评分进度" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+        <button class="text-button" type="button" data-action="restart">重来</button>
+      </header>
+
+      <div class="rating-heading">
+        <p class="eyebrow">第一眼心动值</p>
+        <h2 id="rating-title">这一张，你给几分？</h2>
+      </div>
+
+      <article class="photo-card" id="rating-card" aria-label="待评分造型照片">
+        <div class="photo-stage" id="rating-photo-stage" data-person="p01" data-style="fresh">
+          <img src="./assets/photos/hyunsuk-profile.jpg" alt="待评分 TREASURE 成员造型照片" id="rating-image">
+          <div class="photo-noise" aria-hidden="true"></div>
+          <span class="mystery-label" id="mystery-label">MYSTERY 01</span>
+          <span class="style-label" id="style-label">清爽日常</span>
+        </div>
+      </article>
+
+      <div class="score-grid" aria-label="选择心动程度">
+        <button class="score-button" type="button" data-score="1"><span class="score-icon">○</span><span>无感</span></button>
+        <button class="score-button" type="button" data-score="2"><span class="score-icon">◔</span><span>有点帅</span></button>
+        <button class="score-button" type="button" data-score="3"><span class="score-icon">♥</span><span>很心动</span></button>
+        <button class="score-button" type="button" data-score="4"><span class="score-icon">♥♥</span><span>本命级</span></button>
+      </div>
+      <button class="skip-button" type="button" data-action="skip">这张先跳过</button>
+      <p class="rating-status" id="rating-status" aria-live="polite"></p>
+    </section>
+
+    <section class="screen duel-screen" data-screen="duel" aria-labelledby="duel-title">
+      <header class="simple-header">
+        <p class="eyebrow">最后一题</p>
+        <h2 id="duel-title">心动冠军二选一</h2>
+        <p>你给它们的分数最高。现在别想太久，选出更让你心动的一张。</p>
+      </header>
+      <div class="duel-grid" id="duel-grid"></div>
+      <button class="skip-button" type="button" data-action="skip-duel">太难了，直接看结果</button>
+    </section>
+
+    <section class="screen result-screen" data-screen="result" aria-labelledby="result-title">
+      <header class="result-header">
+        <p class="eyebrow">你的本轮心动报告</p>
+        <h2 id="result-title">正在生成结果…</h2>
+        <p id="result-subtitle"></p>
+      </header>
+
+      <article class="winner-card" id="winner-card"></article>
+
+      <section class="result-section" aria-labelledby="top-three-title">
+        <div class="section-title-row">
+          <h3 id="top-three-title">本轮 Top 3</h3>
+          <span>身份揭晓</span>
+        </div>
+        <div class="top-three-grid" id="top-three-grid"></div>
+      </section>
+
+      <section class="insight-card" aria-labelledby="insight-title">
+        <p class="eyebrow">反差发现</p>
+        <h3 id="insight-title">你的造型偏好</h3>
+        <p id="contrast-copy"></p>
+        <div class="style-bars" id="style-bars"></div>
+      </section>
+
+      <div class="result-actions">
+        <button class="primary-button" type="button" data-action="replay">换一批，再测一次</button>
+        <button class="secondary-button" type="button" data-action="home">返回首页</button>
+        <button class="clear-button" type="button" data-action="clear">清除本地记录</button>
+      </div>
+      <p class="fine-print">结果仅代表本轮娱乐偏好。照片来自 YGEX / YG LIFE 官方页面；公开发布或商业使用前仍需确认素材许可。</p>
+    </section>
+  </main>
+
+  <script src="./data.js"></script>
+  <script src="./logic.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

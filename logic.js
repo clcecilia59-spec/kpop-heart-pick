@@ -16,54 +16,43 @@
   function arrangeWithoutRepeats(items, randomFn) {
     var rng = randomFn || Math.random;
 
-    function isValid(candidate, avoidSameStyle) {
-      for (var index = 1; index < candidate.length; index += 1) {
-        if (candidate[index - 1].personId === candidate[index].personId) return false;
-        if (candidate[index - 1].groupId === candidate[index].groupId) return false;
-        if (avoidSameStyle && candidate[index - 1].styleId === candidate[index].styleId) return false;
+    function tryArrange(avoidSameStyle) {
+      var remaining = items.slice();
+      var arranged = [];
+
+      while (remaining.length) {
+        var previous = arranged[arranged.length - 1];
+        var groupCounts = {};
+        var styleCounts = {};
+        remaining.forEach(function (item) {
+          groupCounts[item.groupId] = (groupCounts[item.groupId] || 0) + 1;
+          styleCounts[item.styleId] = (styleCounts[item.styleId] || 0) + 1;
+        });
+
+        var candidates = shuffle(remaining, rng).filter(function (item) {
+          return !previous || (
+            item.groupId !== previous.groupId &&
+            (!avoidSameStyle || item.styleId !== previous.styleId)
+          );
+        }).sort(function (a, b) {
+          var aPressure = groupCounts[a.groupId] + (avoidSameStyle ? styleCounts[a.styleId] : 0);
+          var bPressure = groupCounts[b.groupId] + (avoidSameStyle ? styleCounts[b.styleId] : 0);
+          return bPressure - aPressure;
+        });
+
+        if (!candidates.length) return null;
+        var chosen = candidates[0];
+        arranged.push(chosen);
+        remaining = remaining.filter(function (item) { return item.id !== chosen.id; });
       }
-      return true;
+      return arranged;
     }
 
-    var styleCounts = {};
-    items.forEach(function (item) { styleCounts[item.styleId] = (styleCounts[item.styleId] || 0) + 1; });
-    var canSeparateStyles = Math.max.apply(null, Object.keys(styleCounts).map(function (key) { return styleCounts[key]; })) <= Math.ceil(items.length / 2);
-    var attempt;
-    var candidate;
-
-    if (canSeparateStyles) {
-      for (attempt = 0; attempt < 300; attempt += 1) {
-        candidate = shuffle(items, rng);
-        if (isValid(candidate, true)) return candidate;
-      }
-
-      var visited = 0;
-      function search(remaining, arranged) {
-        visited += 1;
-        if (visited > 20000) return null;
-        if (!remaining.length) return arranged;
-        var previous = arranged[arranged.length - 1];
-        var nextItems = shuffle(remaining, rng).filter(function (item) {
-          return !previous || (item.groupId !== previous.groupId && item.styleId !== previous.styleId);
-        });
-        for (var nextIndex = 0; nextIndex < nextItems.length; nextIndex += 1) {
-          var next = nextItems[nextIndex];
-          var rest = remaining.filter(function (item) { return item.id !== next.id; });
-          var result = search(rest, arranged.concat(next));
-          if (result) return result;
-        }
-        return null;
-      }
-
-      var strictResult = search(items, []);
+    for (var attempt = 0; attempt < 200; attempt += 1) {
+      var strictResult = tryArrange(true);
       if (strictResult) return strictResult;
     }
-
-    for (attempt = 0; attempt < 300; attempt += 1) {
-      candidate = shuffle(items, rng);
-      if (isValid(candidate, false)) return candidate;
-    }
-    return shuffle(items, rng);
+    return tryArrange(false) || shuffle(items, rng);
   }
 
   function buildRound(data, randomFn) {
@@ -74,7 +63,7 @@
       var selectedPeople = [];
       data.groups.forEach(function (group) {
         var groupPeople = data.people.filter(function (person) { return person.groupId === group.id; });
-        selectedPeople = selectedPeople.concat(shuffle(groupPeople, rng).slice(0, 2));
+        selectedPeople = selectedPeople.concat(shuffle(groupPeople, rng).slice(0, 5));
       });
 
       var styleCounts = { fresh: 0, stage: 0, noir: 0 };
@@ -88,7 +77,7 @@
       });
 
       var counts = Object.keys(styleCounts).map(function (key) { return styleCounts[key]; });
-      if (Math.min.apply(null, counts) >= 3 && Math.max.apply(null, counts) <= 5) break;
+      if (Math.min.apply(null, counts) >= 9 && Math.max.apply(null, counts) <= 11) break;
     }
 
     return arrangeWithoutRepeats(selected, rng);

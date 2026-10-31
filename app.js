@@ -1,7 +1,8 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v5';
+  var ROUND_SIZE = 30;
+  var STORAGE_KEY = 'kpop-heart-pick-v6';
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
@@ -73,9 +74,9 @@
   function loadState() {
     try {
       var saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
-      if (saved && Array.isArray(saved.round) && saved.round.length === 12 && saved.ratings) {
+      if (saved && Array.isArray(saved.round) && saved.round.length === ROUND_SIZE && saved.ratings) {
         state = saved;
-        if (state.screen === 'rating' && state.index >= 12) state.screen = 'duel';
+        if (state.screen === 'rating' && state.index >= ROUND_SIZE) state.screen = 'duel';
         return true;
       }
     } catch (error) { /* ignore invalid state */ }
@@ -107,7 +108,7 @@
     var current = String(state.index + 1).padStart(2, '0');
     els.progressCurrent.textContent = current;
     els.progressBar.setAttribute('aria-valuenow', String(state.index + 1));
-    els.progressFill.style.width = (((state.index + 1) / 12) * 100) + '%';
+    els.progressFill.style.width = (((state.index + 1) / ROUND_SIZE) * 100) + '%';
     els.ratingStage.setAttribute('data-person', photo.personId);
     els.ratingStage.setAttribute('data-style', photo.styleId);
     els.ratingImage.src = photo.image;

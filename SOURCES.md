@@ -1,21 +1,29 @@
 # TREASURE 照片来源清单
 
-本试玩版只使用官方渠道页面中公开展示的照片，并将来源写入 `data.js`。官方公开展示不代表已获得再发布或商业使用授权；提交小红书审核、公开发布或商业使用前，请向权利方确认许可。
+本试玩版使用 TREASURE、YG Entertainment、YG Japan 等官方 Instagram 账号公开发布的成员照片。候选图以社交平台互动量、正脸清晰度、构图和风格差异为筛选依据；例如 JUNKYU 2026 生日帖在筛选时约有 21.7 万赞。
 
-## 当前资料照（8 人）
+公开展示或高点赞不代表已经获得再发布、商业使用或肖像授权。提交小红书审核、公开推广或商业化前，请向照片及艺人相关权利方确认许可。
 
-- 来源：[TREASURE｜YGEX 官方资料页](https://ygex.jp/en/treasure/profile/)
-- 成员：CHOI HYUN SUK、JIHOON、YOSHI、JUNKYU、YOON JAE HYUK、ASAHI、DOYOUNG、HARUTO
-- 本地文件：`assets/photos/*-profile.jpg`
+## 自然感 / 生日造型
 
-## 清爽日常造型
+- [CHOI HYUN SUK](https://www.instagram.com/p/DXW5TIzEXaz/)
+- [JIHOON](https://www.instagram.com/p/DV1DA4bEoA3/)
+- [YOSHI](https://www.instagram.com/p/DYUsVMqRcAv/)
+- [JUNKYU](https://www.instagram.com/p/DdB9V0cA0uz/)
+- [YOON JAE HYUK](https://www.instagram.com/p/DbGWsOZA1Z1/)
+- [ASAHI](https://www.instagram.com/p/DcOdaQFAIlp/)
+- [DOYOUNG](https://www.instagram.com/p/DRzjkuIDzZZ/)
+- [HARUTO](https://www.instagram.com/p/DWtsrtTEb6Q/)
 
-- [YG LIFE：CHOI HYUN SUK / JIHOON / YOSHI / JUNKYU](https://yg-life.com/archives/148175?lang=en)
-- [YG LIFE：YOON JAE HYUK / ASAHI](https://yg-life.com/archives/148358?lang=ko)
-- 本地文件：`assets/photos/*-casual.jpg`
+## 概念视觉 / 舞台气场
 
-## 舞台造型海报
+- [CHOI HYUN SUK：SHOCK](https://www.instagram.com/p/De_fLAwKG07/)
+- [JIHOON：SHOCK](https://www.instagram.com/p/De_fPGVK2jX/)
+- [YOSHI：SHOCK](https://www.instagram.com/p/DfBOBkypVlk/)
+- [JUNKYU：KING KONG](https://www.instagram.com/p/C7L0HMBRNyf/)
+- [YOON JAE HYUK：SHOCK](https://www.instagram.com/p/DfB_uvNB3Kk/)
+- [ASAHI：SHOCK](https://www.instagram.com/p/DfCEbjGq4Jj/)
+- [DOYOUNG：SHOCK](https://www.instagram.com/p/DfB__EMh9SS/)
+- [HARUTO：SHOCK](https://www.instagram.com/p/DfESlylx2Xv/)
 
-- [YG LIFE：DOYOUNG](https://yg-life.com/archives/188023?lang=ko)
-- [YG LIFE：HARUTO](https://yg-life.com/archives/187091?lang=ja)
-- 本地文件：`assets/photos/doyoung-poster.jpg`、`assets/photos/haruto-poster.jpg`
+所有本地文件位于 `assets/photos/`。为保持网页轻量化，原图已统一压缩到最长边 1400 像素。

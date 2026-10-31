@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v3';
+  var STORAGE_KEY = 'kpop-heart-pick-v4';
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));

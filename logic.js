@@ -36,33 +36,33 @@
   }
 
   function buildRound(data, randomFn) {
-    var freshPeople = shuffle(data.people.filter(function (person) {
+    var noirPeople = data.people.filter(function (person) {
       return data.photos.some(function (photo) {
-        return photo.personId === person.id && photo.styleId === 'fresh';
+        return photo.personId === person.id && photo.styleId === 'noir';
       });
-    }), randomFn);
+    });
     var stagePeople = shuffle(data.people.filter(function (person) {
       return data.photos.some(function (photo) {
         return photo.personId === person.id && photo.styleId === 'stage';
       });
     }), randomFn);
-    var noirFirstId = freshPeople[0].id;
-    var selected = freshPeople.map(function (person) {
-      var preferredStyle = person.id === noirFirstId ? 'noir' : 'fresh';
+    var selectedStageIds = stagePeople.slice(0, 2).map(function (person) { return person.id; });
+
+    var base = data.people.map(function (person) {
+      var preferredStyle = 'fresh';
+      if (noirPeople.some(function (entry) { return entry.id === person.id; })) preferredStyle = 'noir';
+      if (selectedStageIds.indexOf(person.id) !== -1) preferredStyle = 'stage';
       return data.photos.find(function (photo) {
         return photo.personId === person.id && photo.styleId === preferredStyle;
       });
-    }).concat(stagePeople.map(function (person) {
-      return data.photos.find(function (photo) {
-        return photo.personId === person.id && photo.styleId === 'stage';
-      });
-    }));
-    var selectedIds = selected.map(function (photo) { return photo.id; });
-    var extraPool = data.photos.filter(function (photo) {
-      return selectedIds.indexOf(photo.id) === -1 && photo.styleId === 'noir';
-    });
-    var extras = shuffle(extraPool, randomFn).slice(0, Math.max(0, 12 - selected.length));
-    return avoidAdjacentSamePerson(selected.concat(extras), randomFn);
+    }).filter(Boolean);
+
+    var baseIds = base.map(function (photo) { return photo.id; });
+    var freshExtras = shuffle(data.photos.filter(function (photo) {
+      return photo.styleId === 'fresh' && baseIds.indexOf(photo.id) === -1;
+    }), randomFn).slice(0, 4);
+
+    return avoidAdjacentSamePerson(base.concat(freshExtras), randomFn);
   }
 
   function getScored(round, ratings) {

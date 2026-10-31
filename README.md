@@ -1,3 +1,28 @@
-# TREASURE K-pop Heart Pick
+# TREASURE 心动取向：真人素材试玩版
 
-A lightweight offline K-pop photo rating mini tool.
+这是一个可离线运行、适配小红书小工具容器限制的静态 Web 应用。
+
+## 试玩
+
+直接用浏览器打开 `index.html`。不需要安装依赖，也不需要启动服务器。
+
+## 已实现
+
+- 8 位 TREASURE 成员、16 张官方渠道照片
+- 每轮随机抽取 12 张，8 位成员都会出现，其中 4 位出现第二种造型
+- 清爽日常、舞台气场、黑白酷感三种视觉风格
+- 四档评分、跳过、返回修改、进度保存
+- 最高分照片二选一
+- Top 3、风格平均分、同人造型反差发现
+- 本地恢复、重玩、清除记录
+
+## 素材与许可
+
+照片来自 TREASURE、YG Entertainment、YG Japan 等官方 Instagram 账号的高互动帖子，具体链接见 `SOURCES.md`，并已全部压缩后放入 `assets/photos/` 离线使用。官方公开发布与高点赞不等于获得再发布授权；提交小红书审核、公开发布或商业使用前，需要再确认肖像、版权及平台许可。
+
+## 容器兼容约束
+
+- 所有 JavaScript 均在外部 `.js` 文件中
+- 所有交互通过 `addEventListener` 绑定
+- 所有资源均在包内，无网络请求
+- 不使用 Worker、WebAssembly、iframe、外链或下载能力

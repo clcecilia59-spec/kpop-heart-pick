@@ -13,56 +13,85 @@
     return output;
   }
 
-  function avoidAdjacentSamePerson(items, randomFn) {
+  function arrangeWithoutRepeats(items, randomFn) {
     var rng = randomFn || Math.random;
 
-    function arrange(remaining, arranged) {
-      if (!remaining.length) return arranged;
-      var previous = arranged[arranged.length - 1];
-      var candidates = shuffle(remaining, rng).filter(function (item) {
-        return !previous || (previous.personId !== item.personId && previous.styleId !== item.styleId);
-      });
-
-      for (var index = 0; index < candidates.length; index += 1) {
-        var candidate = candidates[index];
-        var nextRemaining = remaining.filter(function (item) { return item.id !== candidate.id; });
-        var result = arrange(nextRemaining, arranged.concat(candidate));
-        if (result) return result;
+    function isValid(candidate, avoidSameStyle) {
+      for (var index = 1; index < candidate.length; index += 1) {
+        if (candidate[index - 1].personId === candidate[index].personId) return false;
+        if (candidate[index - 1].groupId === candidate[index].groupId) return false;
+        if (avoidSameStyle && candidate[index - 1].styleId === candidate[index].styleId) return false;
       }
-      return null;
+      return true;
     }
 
-    return arrange(items, []) || shuffle(items, rng);
+    var styleCounts = {};
+    items.forEach(function (item) { styleCounts[item.styleId] = (styleCounts[item.styleId] || 0) + 1; });
+    var canSeparateStyles = Math.max.apply(null, Object.keys(styleCounts).map(function (key) { return styleCounts[key]; })) <= Math.ceil(items.length / 2);
+    var attempt;
+    var candidate;
+
+    if (canSeparateStyles) {
+      for (attempt = 0; attempt < 300; attempt += 1) {
+        candidate = shuffle(items, rng);
+        if (isValid(candidate, true)) return candidate;
+      }
+
+      var visited = 0;
+      function search(remaining, arranged) {
+        visited += 1;
+        if (visited > 20000) return null;
+        if (!remaining.length) return arranged;
+        var previous = arranged[arranged.length - 1];
+        var nextItems = shuffle(remaining, rng).filter(function (item) {
+          return !previous || (item.groupId !== previous.groupId && item.styleId !== previous.styleId);
+        });
+        for (var nextIndex = 0; nextIndex < nextItems.length; nextIndex += 1) {
+          var next = nextItems[nextIndex];
+          var rest = remaining.filter(function (item) { return item.id !== next.id; });
+          var result = search(rest, arranged.concat(next));
+          if (result) return result;
+        }
+        return null;
+      }
+
+      var strictResult = search(items, []);
+      if (strictResult) return strictResult;
+    }
+
+    for (attempt = 0; attempt < 300; attempt += 1) {
+      candidate = shuffle(items, rng);
+      if (isValid(candidate, false)) return candidate;
+    }
+    return shuffle(items, rng);
   }
 
   function buildRound(data, randomFn) {
-    var noirPeople = data.people.filter(function (person) {
-      return data.photos.some(function (photo) {
-        return photo.personId === person.id && photo.styleId === 'noir';
-      });
-    });
-    var stagePeople = shuffle(data.people.filter(function (person) {
-      return data.photos.some(function (photo) {
-        return photo.personId === person.id && photo.styleId === 'stage';
-      });
-    }), randomFn);
-    var selectedStageIds = stagePeople.slice(0, 2).map(function (person) { return person.id; });
+    var rng = randomFn || Math.random;
+    var selected = [];
 
-    var base = data.people.map(function (person) {
-      var preferredStyle = 'fresh';
-      if (noirPeople.some(function (entry) { return entry.id === person.id; })) preferredStyle = 'noir';
-      if (selectedStageIds.indexOf(person.id) !== -1) preferredStyle = 'stage';
-      return data.photos.find(function (photo) {
-        return photo.personId === person.id && photo.styleId === preferredStyle;
+    for (var attempt = 0; attempt < 80; attempt += 1) {
+      var selectedPeople = [];
+      data.groups.forEach(function (group) {
+        var groupPeople = data.people.filter(function (person) { return person.groupId === group.id; });
+        selectedPeople = selectedPeople.concat(shuffle(groupPeople, rng).slice(0, 2));
       });
-    }).filter(Boolean);
 
-    var baseIds = base.map(function (photo) { return photo.id; });
-    var freshExtras = shuffle(data.photos.filter(function (photo) {
-      return photo.styleId === 'fresh' && baseIds.indexOf(photo.id) === -1;
-    }), randomFn).slice(0, 4);
+      var styleCounts = { fresh: 0, stage: 0, noir: 0 };
+      selected = shuffle(selectedPeople, rng).map(function (person) {
+        var options = shuffle(data.photos.filter(function (photo) { return photo.personId === person.id; }), rng);
+        options.sort(function (a, b) { return styleCounts[a.styleId] - styleCounts[b.styleId]; });
+        var chosen = options[0];
+        if (!chosen) throw new Error('未找到 ' + person.name + ' 的照片');
+        styleCounts[chosen.styleId] += 1;
+        return chosen;
+      });
 
-    return avoidAdjacentSamePerson(base.concat(freshExtras), randomFn);
+      var counts = Object.keys(styleCounts).map(function (key) { return styleCounts[key]; });
+      if (Math.min.apply(null, counts) >= 3 && Math.max.apply(null, counts) <= 5) break;
+    }
+
+    return arrangeWithoutRepeats(selected, rng);
   }
 
   function getScored(round, ratings) {

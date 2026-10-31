@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v4';
+  var STORAGE_KEY = 'kpop-heart-pick-v5';
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
@@ -111,7 +111,7 @@
     els.ratingStage.setAttribute('data-person', photo.personId);
     els.ratingStage.setAttribute('data-style', photo.styleId);
     els.ratingImage.src = photo.image;
-    els.ratingImage.alt = '第 ' + (state.index + 1) + ' 张待评分 TREASURE 成员造型照片';
+    els.ratingImage.alt = '第 ' + (state.index + 1) + ' 张待评分 K-pop 男团成员造型照片';
     els.mysteryLabel.textContent = 'MYSTERY ' + current;
     els.styleLabel.textContent = photo.styleLabel;
     els.ratingStatus.textContent = '';
@@ -220,7 +220,7 @@
     if (result.contrast) {
       els.contrastCopy.textContent = '你给 ' + result.contrast.personName + ' 的「' + result.contrast.highStyle + '」比「' + result.contrast.lowStyle + '」高出 ' + result.contrast.gap + ' 分。同一个人，造型真的会改变心动值。';
     } else {
-      els.contrastCopy.textContent = result.closeCall ? '你的前两种风格得分非常接近，这一轮没有单一答案。' : '这轮没有出现特别强的同人造型反差，你的判断更看整体感觉。';
+      els.contrastCopy.textContent = result.closeCall ? '你的前两种风格得分非常接近，这一轮没有单一答案。' : '这一轮你对「' + favorite.label + '」的平均心动值最高，风格比团名更先抓住了你的注意力。';
     }
 
     result.styleAverages.forEach(function (style) {

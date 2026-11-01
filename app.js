@@ -2,7 +2,7 @@
   'use strict';
 
   var ROUND_SIZE = 30;
-  var STORAGE_KEY = 'kpop-heart-pick-v6';
+  var STORAGE_KEY = 'kpop-heart-pick-v8';
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));

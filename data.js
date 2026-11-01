@@ -98,7 +98,7 @@
       group: person.group,
       styleId: styleId,
       styleLabel: style.label,
-      image: './assets/photos/' + filename + '?v=8',
+      image: './assets/photos/' + filename + '?v=9',
       alt: person.name + ' ' + (description || '官方成员资料照'),
       source: source || profileSources[person.groupId],
       rights: rights

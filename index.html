@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f1eb">
   <title>你的 K-pop 心动取向</title>
-  <link rel="stylesheet" href="./style.css?v=5">
+  <link rel="stylesheet" href="./style.css?v=9">
 </head>
 <body>
   <main class="app-shell" id="app">
@@ -17,24 +17,24 @@
         <div class="portrait-stack portrait-stack-center"></div>
         <div class="portrait-stack portrait-stack-right"></div>
       </div>
-      <p class="eyebrow">3 分钟心动实验</p>
+      <p class="eyebrow">3 分钟互动心动实验</p>
       <h1 id="intro-title">你的 K-pop<br>心动取向</h1>
-      <p class="intro-copy">凭第一眼感觉给 30 张造型打分。最后揭晓你的心动关键词，以及让你反复心动的那一种风格。</p>
+      <p class="intro-copy">不只打分：随机穿插二选一、盲选揭晓、限时心动和风格反差挑战，最后生成你的专属心动鉴定书。</p>
       <div class="intro-meta" aria-label="测试说明">
-        <span>30 张照片</span>
-        <span>隐藏身份</span>
-        <span>结果可重玩</span>
+        <span>多种题型</span>
+        <span>身份揭晓</span>
+        <span>终极对决</span>
       </div>
       <button class="primary-button" type="button" data-action="start">开始心动测试</button>
-      <p class="fine-print">6 团 46 人混合版 · 每团随机 5 人 · 姓名将在结果页揭晓</p>
+      <p class="fine-print">6 团 46 人混合版 · 每轮随机生成 · 选择后会出现心动彩蛋</p>
     </section>
 
     <section class="screen rating-screen" data-screen="rating" aria-labelledby="rating-title">
       <header class="topbar">
         <button class="icon-button" type="button" data-action="back" aria-label="返回上一张">←</button>
         <div class="progress-wrap">
-          <div class="progress-label"><span id="progress-current">01</span><span>/ 30</span></div>
-          <div class="progress-track" role="progressbar" aria-label="评分进度" aria-valuemin="1" aria-valuemax="30" aria-valuenow="1">
+          <div class="progress-label"><span id="progress-current">01</span><span id="progress-total">/ 26</span></div>
+          <div class="progress-track" role="progressbar" aria-label="挑战进度" aria-valuemin="1" aria-valuemax="26" aria-valuenow="1">
             <div class="progress-fill"></div>
           </div>
         </div>
@@ -42,13 +42,14 @@
       </header>
 
       <div class="rating-heading">
-        <p class="eyebrow">第一眼心动值</p>
+        <p class="eyebrow" id="challenge-kicker">第一眼心动值</p>
         <h2 id="rating-title">这一张，你给几分？</h2>
+        <div class="timer-wrap" id="timer-wrap" hidden><span id="timer-label">3 秒</span><span class="timer-track"><i id="timer-fill"></i></span></div>
       </div>
 
       <article class="photo-card" id="rating-card" aria-label="待评分造型照片">
         <div class="photo-stage" id="rating-photo-stage" data-person="p01" data-style="fresh">
-          <img src="./assets/photos/hyunsuk-profile.jpg?v=8" alt="待评分 K-pop 男团成员造型照片" id="rating-image">
+          <img src="./assets/photos/hyunsuk-profile.jpg?v=9" alt="待评分 K-pop 男团成员造型照片" id="rating-image">
           <div class="photo-noise" aria-hidden="true"></div>
           <span class="mystery-label" id="mystery-label">MYSTERY 01</span>
           <span class="style-label" id="style-label">清爽日常</span>
@@ -63,6 +64,25 @@
       </div>
       <button class="skip-button" type="button" data-action="skip">这张先跳过</button>
       <p class="rating-status" id="rating-status" aria-live="polite"></p>
+    </section>
+
+    <section class="screen choice-screen" data-screen="choice" aria-labelledby="choice-title">
+      <header class="topbar">
+        <button class="icon-button" type="button" data-action="back" aria-label="返回上一题">←</button>
+        <div class="progress-wrap">
+          <div class="progress-label"><span id="choice-progress-current">01</span><span id="choice-progress-total">/ 26</span></div>
+          <div class="progress-track" id="choice-progress-track" role="progressbar" aria-label="挑战进度" aria-valuemin="1" aria-valuemax="26" aria-valuenow="1"><div class="progress-fill" id="choice-progress-fill"></div></div>
+        </div>
+        <button class="text-button" type="button" data-action="restart">重来</button>
+      </header>
+      <header class="simple-header choice-header">
+        <p class="eyebrow" id="choice-kicker">心动二选一</p>
+        <h2 id="choice-title">只能选一个</h2>
+        <p id="choice-copy">别想太久，第一眼更想点开的就是答案。</p>
+      </header>
+      <div class="duel-grid" id="choice-grid"></div>
+      <button class="skip-button" type="button" data-action="skip">这题太难，先跳过</button>
+      <p class="rating-status" id="choice-status" aria-live="polite"></p>
     </section>
 
     <section class="screen duel-screen" data-screen="duel" aria-labelledby="duel-title">
@@ -84,6 +104,8 @@
 
       <article class="winner-card" id="winner-card"></article>
 
+      <section class="result-stats" id="result-stats" aria-label="心动数据摘要"></section>
+
       <section class="result-section" aria-labelledby="top-three-title">
         <div class="section-title-row">
           <h3 id="top-three-title">本轮 Top 3</h3>
@@ -99,8 +121,16 @@
         <div class="style-bars" id="style-bars"></div>
       </section>
 
+      <section class="insight-card group-insight" aria-labelledby="group-title">
+        <p class="eyebrow">隐藏偏爱</p>
+        <h3 id="group-title">最容易击中你的组合</h3>
+        <p id="group-copy"></p>
+        <div class="style-bars" id="group-bars"></div>
+      </section>
+
       <div class="result-actions">
         <button class="primary-button" type="button" data-action="replay">换一批，再测一次</button>
+        <button class="secondary-button" type="button" data-action="share">复制我的心动鉴定</button>
         <button class="secondary-button" type="button" data-action="home">返回首页</button>
         <button class="clear-button" type="button" data-action="clear">清除本地记录</button>
       </div>
@@ -108,8 +138,10 @@
     </section>
   </main>
 
-  <script src="./data.js?v=8"></script>
-  <script src="./logic.js?v=8"></script>
-  <script src="./app.js?v=8"></script>
+  <div class="streak-toast" id="streak-toast" role="status" aria-live="polite"></div>
+
+  <script src="./data.js?v=9"></script>
+  <script src="./logic.js?v=9"></script>
+  <script src="./app.js?v=9"></script>
 </body>
 </html>

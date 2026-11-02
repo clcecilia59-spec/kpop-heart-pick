@@ -11,15 +11,20 @@
     return output;
   }
 
-  function arrangeWithoutRepeats(items, randomFn) {
+  function arrangeWithoutGroupRepeats(items, randomFn) {
     var rng = randomFn || Math.random;
     var remaining = items.slice();
     var arranged = [];
     while (remaining.length) {
       var previous = arranged[arranged.length - 1];
-      var candidates = shuffle(remaining, rng).filter(function (item) {
-        return !previous || item.groupId !== previous.groupId;
-      });
+      var counts = {};
+      remaining.forEach(function (item) { counts[item.groupId] = (counts[item.groupId] || 0) + 1; });
+      var groups = Object.keys(counts).filter(function (groupId) { return !previous || groupId !== previous.groupId; });
+      groups.sort(function (a, b) { return counts[b] - counts[a]; });
+      var highest = counts[groups[0]];
+      var tied = groups.filter(function (groupId) { return counts[groupId] === highest; });
+      var chosenGroup = tied[Math.floor(rng() * tied.length)];
+      var candidates = shuffle(remaining.filter(function (item) { return item.groupId === chosenGroup; }), rng);
       var chosen = candidates[0] || remaining[0];
       arranged.push(chosen);
       remaining = remaining.filter(function (item) { return item.id !== chosen.id; });
@@ -27,169 +32,103 @@
     return arranged;
   }
 
-  function buildRound(data, randomFn) {
+  function photosFor(data, personId) {
+    return data.photos.filter(function (photo) { return photo.personId === personId; });
+  }
+
+  function buildFirstRound(data, randomFn) {
     var rng = randomFn || Math.random;
-    var selected = [];
-    for (var attempt = 0; attempt < 80; attempt += 1) {
-      var selectedPeople = [];
-      data.groups.forEach(function (group) {
-        var people = data.people.filter(function (person) { return person.groupId === group.id; });
-        selectedPeople = selectedPeople.concat(shuffle(people, rng).slice(0, 5));
-      });
-      var styleCounts = { fresh: 0, stage: 0, noir: 0 };
-      selected = shuffle(selectedPeople, rng).map(function (person) {
-        var options = shuffle(data.photos.filter(function (photo) { return photo.personId === person.id; }), rng);
-        options.sort(function (a, b) { return styleCounts[a.styleId] - styleCounts[b.styleId]; });
-        var chosen = options[0];
-        if (!chosen) throw new Error('未找到 ' + person.name + ' 的照片');
-        styleCounts[chosen.styleId] += 1;
-        return chosen;
-      });
-      var counts = Object.keys(styleCounts).map(function (key) { return styleCounts[key]; });
-      if (Math.min.apply(null, counts) >= 9 && Math.max.apply(null, counts) <= 11) break;
-    }
-    return arrangeWithoutRepeats(selected, rng);
+    return arrangeWithoutGroupRepeats(shuffle(data.people, rng), rng).map(function (person) {
+      var choices = shuffle(photosFor(data, person.id), rng);
+      return { id: 'first-' + person.id, personId: person.id, photo: choices[0] };
+    });
   }
 
-  function buildChallengePlan(data, randomFn) {
+  function styleCandidateIds(firstRound, firstAnswers) {
+    return firstRound.filter(function (item) {
+      var score = firstAnswers[item.personId];
+      return score === 1 || score === 3 || score === 4;
+    }).map(function (item) { return item.personId; });
+  }
+
+  function buildStyleRound(data, personIds, randomFn) {
     var rng = randomFn || Math.random;
-    var round = buildRound(data, rng);
-    var pool = shuffle(round, rng);
-    var ratings = pool.slice(0, 15);
-    var duels = pool.slice(15, 27);
-    var blinds = pool.slice(27, 29);
-    var timedIndexes = shuffle([1, 3, 5, 7, 9, 11, 13], rng).slice(0, 3);
-    var ratingChallenges = ratings.map(function (photo, index) {
-      return { id: 'rating-' + index, type: timedIndexes.indexOf(index) >= 0 ? 'timed' : 'rating', photos: [photo] };
+    return shuffle(personIds, rng).map(function (personId) {
+      return { id: 'style-' + personId, personId: personId, photos: shuffle(photosFor(data, personId), rng).slice(0, 2) };
     });
-    var duelChallenges = [];
-    for (var d = 0; d < duels.length; d += 2) {
-      duelChallenges.push({ id: 'duel-' + (d / 2), type: 'duel', photos: [duels[d], duels[d + 1]] });
+  }
+
+  function styleAdvancerIds(styleRound, styleAnswers) {
+    return styleRound.filter(function (item) {
+      var answer = styleAnswers[item.personId] || {};
+      return Object.keys(answer).some(function (photoId) { return answer[photoId] >= 3; });
+    }).map(function (item) { return item.personId; });
+  }
+
+  function resurrectionLimit(count) {
+    if (!count) return 0;
+    if (count === 1) return 1;
+    return Math.min(4, Math.max(2, Math.ceil(count / 10)));
+  }
+
+  function buildTimedDuels(personIds, randomFn) {
+    var order = shuffle(personIds, randomFn);
+    var duels = [];
+    var bye = null;
+    if (order.length % 2) bye = order.pop();
+    for (var i = 0; i < order.length; i += 2) {
+      duels.push({ id: 'timed-' + (i / 2), personIds: [order[i], order[i + 1]] });
     }
-    var blindChallenges = blinds.map(function (photo, index) {
-      return { id: 'blind-' + index, type: 'blind', photos: [photo] };
-    });
-    var byPerson = {};
-    data.photos.forEach(function (photo) {
-      byPerson[photo.personId] = byPerson[photo.personId] || [];
-      byPerson[photo.personId].push(photo);
-    });
-    var stylePairs = shuffle(Object.keys(byPerson).filter(function (personId) {
-      return byPerson[personId].length > 1;
-    }), rng).slice(0, 3).map(function (personId, index) {
-      return { id: 'style-' + index, type: 'style', photos: shuffle(byPerson[personId], rng).slice(0, 2) };
-    });
-    var buckets = {
-      rating: ratingChallenges.filter(function (item) { return item.type === 'rating'; }),
-      timed: ratingChallenges.filter(function (item) { return item.type === 'timed'; }),
-      duel: duelChallenges,
-      blind: blindChallenges,
-      style: stylePairs
-    };
-    var pattern = ['rating','duel','rating','timed','style','rating','duel','blind','rating','timed','duel','rating','style','rating','duel','rating','blind','timed','duel','rating','style','rating','duel','rating','rating','rating'];
-    var challenges = [];
-    pattern.forEach(function (type) {
-      if (buckets[type] && buckets[type].length) challenges.push(buckets[type].shift());
-    });
-    Object.keys(buckets).forEach(function (type) { challenges = challenges.concat(buckets[type]); });
-    challenges.forEach(function (challenge, index) { challenge.number = index + 1; });
-    return { round: round, challenges: challenges };
+    return { duels: duels, bye: bye };
   }
 
-  function buildRatings(challenges, answers) {
-    var totals = {};
-    var counts = {};
-    challenges.forEach(function (challenge) {
-      var answer = answers[challenge.id];
-      if (!answer) return;
-      if (challenge.type === 'rating' || challenge.type === 'timed' || challenge.type === 'blind') {
-        if (typeof answer.score === 'number') {
-          var photoId = challenge.photos[0].id;
-          totals[photoId] = (totals[photoId] || 0) + answer.score;
-          counts[photoId] = (counts[photoId] || 0) + 1;
-        }
-        return;
-      }
-      var winner = challenge.photos.filter(function (photo) { return photo.id === answer.winnerId; })[0];
-      if (winner) {
-        totals[winner.id] = (totals[winner.id] || 0) + 2;
-        counts[winner.id] = (counts[winner.id] || 0) + 1;
-      }
+  function buildGauntlet(personIds, randomFn) {
+    return shuffle(personIds, randomFn);
+  }
+
+  function preferredPhoto(data, personId, styleAnswers, firstRound) {
+    var answers = styleAnswers[personId] || {};
+    var candidates = photosFor(data, personId).slice();
+    var bias = candidates.filter(function (photo) { return answers[photo.id] === 4; })[0];
+    if (bias) return bias;
+    var heart = candidates.filter(function (photo) { return answers[photo.id] === 3; })[0];
+    if (heart) return heart;
+    var first = firstRound.filter(function (item) { return item.personId === personId; })[0];
+    return first ? first.photo : candidates[0];
+  }
+
+  function personScore(personId, firstAnswers, styleAnswers, timedWinners, gauntletWins) {
+    var score = firstAnswers[personId] || 0;
+    var style = styleAnswers[personId] || {};
+    Object.keys(style).forEach(function (photoId) { score += style[photoId]; });
+    score += timedWinners.filter(function (id) { return id === personId; }).length * 2;
+    score += (gauntletWins[personId] || 0) * 2;
+    return score;
+  }
+
+  function rankPeople(personIds, firstAnswers, styleAnswers, timedWinners, gauntletWins, championId) {
+    return personIds.map(function (personId) {
+      return { personId: personId, score: personScore(personId, firstAnswers, styleAnswers, timedWinners, gauntletWins) };
+    }).sort(function (a, b) {
+      if (a.personId === championId) return -1;
+      if (b.personId === championId) return 1;
+      return b.score - a.score || a.personId.localeCompare(b.personId);
     });
-    var ratings = {};
-    Object.keys(totals).forEach(function (photoId) { ratings[photoId] = totals[photoId] / counts[photoId]; });
-    return ratings;
-  }
-
-  function uniquePhotos(challenges) {
-    var seen = {};
-    var photos = [];
-    challenges.forEach(function (challenge) {
-      challenge.photos.forEach(function (photo) {
-        if (!seen[photo.id]) { seen[photo.id] = true; photos.push(photo); }
-      });
-    });
-    return photos;
-  }
-
-  function getScored(round, ratings) {
-    return round.filter(function (photo) { return typeof ratings[photo.id] === 'number'; }).map(function (photo) {
-      return { photo: photo, score: ratings[photo.id] };
-    });
-  }
-
-  function selectFinalists(round, ratings) {
-    return getScored(round, ratings).sort(function (a, b) {
-      return b.score - a.score || a.photo.id.localeCompare(b.photo.id);
-    }).slice(0, 2).map(function (entry) { return entry.photo; });
-  }
-
-  function calculateStyleAverages(data, round, ratings) {
-    return data.styles.map(function (style) {
-      var entries = round.filter(function (photo) { return photo.styleId === style.id && typeof ratings[photo.id] === 'number'; });
-      var total = entries.reduce(function (sum, photo) { return sum + ratings[photo.id]; }, 0);
-      return { id: style.id, label: style.label, keyword: style.keyword, result: style.result, count: entries.length, average: entries.length ? total / entries.length : 0 };
-    }).sort(function (a, b) { return b.average - a.average; });
-  }
-
-  function buildResult(data, round, ratings, duelWinnerId) {
-    var scored = getScored(round, ratings).sort(function (a, b) {
-      if (a.photo.id === duelWinnerId) return -1;
-      if (b.photo.id === duelWinnerId) return 1;
-      return b.score - a.score || a.photo.id.localeCompare(b.photo.id);
-    });
-    var styleAverages = calculateStyleAverages(data, round, ratings);
-    var eligibleStyles = styleAverages.filter(function (entry) { return entry.count >= 2; });
-    var favoriteStyle = eligibleStyles[0] || styleAverages[0];
-    var closeCall = eligibleStyles.length > 1 && Math.abs(eligibleStyles[0].average - eligibleStyles[1].average) < 0.3;
-    var groupScores = data.groups.map(function (group) {
-      var entries = scored.filter(function (entry) { return entry.photo.groupId === group.id; });
-      var average = entries.length ? entries.reduce(function (sum, entry) { return sum + entry.score; }, 0) / entries.length : 0;
-      return { id: group.id, name: group.name, count: entries.length, average: average };
-    }).sort(function (a, b) { return b.average - a.average; });
-    var highScores = scored.filter(function (entry) { return entry.score >= 3.5; });
-    return {
-      validCount: scored.length,
-      winner: scored[0] || null,
-      topThree: scored.slice(0, 3),
-      styleAverages: styleAverages,
-      favoriteStyle: favoriteStyle,
-      closeCall: closeCall,
-      groupScores: groupScores,
-      favoriteGroup: groupScores[0],
-      focus: scored.length ? Math.round((highScores.length / scored.length) * 100) : 0
-    };
   }
 
   var api = {
     shuffle: shuffle,
-    buildRound: buildRound,
-    buildChallengePlan: buildChallengePlan,
-    buildRatings: buildRatings,
-    uniquePhotos: uniquePhotos,
-    selectFinalists: selectFinalists,
-    calculateStyleAverages: calculateStyleAverages,
-    buildResult: buildResult
+    photosFor: photosFor,
+    buildFirstRound: buildFirstRound,
+    styleCandidateIds: styleCandidateIds,
+    buildStyleRound: buildStyleRound,
+    styleAdvancerIds: styleAdvancerIds,
+    resurrectionLimit: resurrectionLimit,
+    buildTimedDuels: buildTimedDuels,
+    buildGauntlet: buildGauntlet,
+    preferredPhoto: preferredPhoto,
+    personScore: personScore,
+    rankPeople: rankPeople
   };
   root.AppLogic = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

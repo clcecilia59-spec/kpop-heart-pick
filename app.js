@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v9';
+  var STORAGE_KEY = 'kpop-heart-pick-v10';
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
@@ -127,10 +127,10 @@
     els.ratingImage.src = photo.image;
     els.ratingImage.alt = '第 ' + (state.index + 1) + ' 题待评分 K-pop 男团成员造型照片';
     els.mysteryLabel.textContent = challenge.type === 'blind' ? 'WHO IS IT?' : 'MYSTERY ' + String(state.index + 1).padStart(2, '0');
-    els.styleLabel.textContent = challenge.type === 'timed' ? '限时 3 秒' : photo.styleLabel;
+    els.styleLabel.textContent = challenge.type === 'timed' ? '限时 8 秒' : photo.styleLabel;
     els.ratingCard.classList.toggle('is-blind', challenge.type === 'blind' && !answer);
     els.challengeKicker.textContent = challenge.type === 'blind' ? '神秘盲选' : (challenge.type === 'timed' ? '第一眼限时挑战' : '第一眼心动值');
-    els.ratingTitle.textContent = challenge.type === 'blind' ? '只看氛围，你会心动吗？' : (challenge.type === 'timed' ? '3 秒内，凭直觉！' : '这一张，你给几分？');
+    els.ratingTitle.textContent = challenge.type === 'blind' ? '只看氛围，你会心动吗？' : (challenge.type === 'timed' ? '8 秒内，凭直觉！' : '这一张，你给几分？');
     els.ratingStatus.textContent = answer ? revealCopy(photo, answer.score) : '';
     document.querySelectorAll('[data-score]').forEach(function (button) {
       var active = answer && answer.score === Number(button.getAttribute('data-score'));
@@ -144,13 +144,13 @@
   }
 
   function startTimer(challenge) {
-    var remaining = 30;
+    var remaining = 80;
     els.timerWrap.hidden = false;
     els.timerFill.style.width = '100%';
-    els.timerLabel.textContent = '3.0 秒';
+    els.timerLabel.textContent = '8.0 秒';
     timerId = window.setInterval(function () {
       remaining -= 1;
-      els.timerFill.style.width = Math.max(0, remaining / 30 * 100) + '%';
+      els.timerFill.style.width = Math.max(0, remaining / 80 * 100) + '%';
       els.timerLabel.textContent = (remaining / 10).toFixed(1) + ' 秒';
       if (remaining <= 0) {
         stopTimer();

@@ -94,3 +94,19 @@
 - [孙英宰](https://www.instagram.com/eric.is.youngjae/p/Ddvz6_HEldU/)：@eric.is.youngjae，约 18.1 万赞
 
 所有本地文件位于 `assets/photos/`。高分辨率原图已压缩到最长边 1400 像素；低分辨率官方资料照保持原尺寸，未进行有损放大。
+
+## 第二风格高清概念照
+
+以下 38 张补充照片来自可追溯的官方回归概念照合集；页面由 DBKpop 整理，原始素材为组合官方公开的回归视觉。每位成员均与原有照片采用不同造型或拍摄主题，并经过本地加载、人物和移动端 3:4 构图复核。
+
+- [TREASURE：THE SECOND STEP : CHAPTER ONE / JIKJIN](https://dbkpop.com/2022/02/15/treasure-second-step-chapter-one-jikjin-concept-profile-photos-hr/)：朴炡禹、苏庭焕
+- [Stray Kids：5-STAR Teaser 3](https://dbkpop.com/2023/05/23/stray-kids-5-star-teaser-photos-3-hd-hq/)：8 位成员
+- [ENHYPEN：DARK BLOOD New ver.](https://dbkpop.com/2023/05/10/enhypen-dark-blood-concept-teaser-photos-new-ver-uhd-hq-hr/)：6 位成员
+- [TXT：TEMPTATION Lullaby](https://dbkpop.com/2023/01/16/txt-the-name-chapter-temptation-lullaby-teaser-concept-photos-40-photos-uhd-hq-hr/)：崔秀彬、崔杋圭、姜太显、休宁凯
+- [TXT：Thursday’s Child](https://dbkpop.com/2022/05/05/txt-yeonjun-minisode-2-thursdays-child-teaser-concept-photos-hd-hq-hr/)：崔然竣
+- [ATEEZ：THE WORLD EP.1 / 弘中、星化](https://dbkpop.com/2022/07/08/ateez-the-world-ep-1-movement-teaser-photos-hongjoong-seonghwa-hd-hq/)：金弘中、朴星化
+- [ATEEZ：THE WORLD EP.1 / 润浩、吕尚、伞、旼琦](https://dbkpop.com/2022/07/08/ateez-the-world-ep-1-movement-teaser-photos-yunho-yeosang-san-mingi-hd-hq/)：丁润浩、姜吕尚、崔伞、宋旼琦
+- [ATEEZ：THE WORLD EP.1 / 友荣、钟浩](https://dbkpop.com/2022/07/09/ateez-the-world-ep-1-movement-teaser-photos-wooyoung-jongho-hd-hq/)：郑友荣、崔钟浩
+- [THE BOYZ：MAVERICK / 上渊、Kevin、Q、柱延](https://dbkpop.com/2021/10/18/the-boyz-maverick-teaser-doom-ver-sangyeon-kevin-q-juyeon-hd-hq/)：李上渊、文炯书、池昌民、李柱延
+- [THE BOYZ：MAVERICK / Jacob、泳勋](https://dbkpop.com/2021/10/20/the-boyz-maverick-teaser-doom-ver-haknyeon-jacob-new-younghoon-hd-hq/)：裴俊英、金泳勋
+- [THE BOYZ：MAVERICK / Eric、贤在、善旴](https://dbkpop.com/2021/10/21/the-boyz-maverick-teaser-doom-ver-eric-hyunjae-sunwoo-hd-hq/)：孙英宰、李贤在、金善旴

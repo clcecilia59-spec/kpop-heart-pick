@@ -110,11 +110,11 @@
         }
         return;
       }
-      challenge.photos.forEach(function (photo) {
-        var score = photo.id === answer.winnerId ? 4 : 2;
-        totals[photo.id] = (totals[photo.id] || 0) + score;
-        counts[photo.id] = (counts[photo.id] || 0) + 1;
-      });
+      var winner = challenge.photos.filter(function (photo) { return photo.id === answer.winnerId; })[0];
+      if (winner) {
+        totals[winner.id] = (totals[winner.id] || 0) + 2;
+        counts[winner.id] = (counts[winner.id] || 0) + 1;
+      }
     });
     var ratings = {};
     Object.keys(totals).forEach(function (photoId) { ratings[photoId] = totals[photoId] / counts[photoId]; });

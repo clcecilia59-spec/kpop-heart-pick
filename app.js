@@ -1,51 +1,41 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v12';
+  var STORAGE_KEY = 'kpop-heart-pick-v15';
+  var PAGE_SIZE = 8;
+  var MIN_WALL_PICKS = 8;
+  var MAX_WALL_PICKS = 16;
+  var MIN_REVIEW_ADVANCERS = 6;
+  var MAX_REVIEW_ADVANCERS = 14;
   var data = window.IDOL_DATA;
   var logic = window.AppLogic;
-  var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
   var peopleById = {};
   data.people.forEach(function (person) { peopleById[person.id] = person; });
+  var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
   var state = createInitialState();
-  var timerId = null;
-  var timerRemaining = 0;
   var isTransitioning = false;
   var lastShareText = '';
 
   var els = {
-    firstCurrent: document.getElementById('first-current'), firstTotal: document.getElementById('first-total'), firstTrack: document.getElementById('first-track'), firstFill: document.getElementById('first-fill'),
-    ratingStage: document.getElementById('rating-photo-stage'), ratingImage: document.getElementById('rating-image'), ratingMember: document.getElementById('rating-member'), ratingGroup: document.getElementById('rating-group'), ratingStatus: document.getElementById('rating-status'),
-    styleCurrent: document.getElementById('style-current'), styleTotal: document.getElementById('style-total'), styleTrack: document.getElementById('style-track'), styleFill: document.getElementById('style-fill'), styleKicker: document.getElementById('style-kicker'), stylePair: document.getElementById('style-pair'), styleReaction: document.getElementById('style-reaction'),
+    wallCurrent: document.getElementById('wall-current'), wallTotal: document.getElementById('wall-total'), wallTrack: document.getElementById('wall-track'), wallFill: document.getElementById('wall-fill'), wallGrid: document.getElementById('wall-grid'), wallStatus: document.getElementById('wall-status'), wallNext: document.getElementById('wall-next'),
+    reviewGrid: document.getElementById('review-grid'), reviewStatus: document.getElementById('review-status'), confirmReview: document.getElementById('confirm-review'),
+    secondChanceGrid: document.getElementById('second-chance-grid'), secondChanceStatus: document.getElementById('second-chance-status'), confirmSecondChance: document.getElementById('confirm-second-chance'),
     rosterCopy: document.getElementById('roster-copy'), rosterTicket: document.getElementById('roster-ticket'), nameGrid: document.getElementById('name-grid'), rosterStatus: document.getElementById('roster-status'), confirmRoster: document.getElementById('confirm-roster'),
-    timedCurrent: document.getElementById('timed-current'), timedTotal: document.getElementById('timed-total'), timedTrack: document.getElementById('timed-track'), timedFill: document.getElementById('timed-fill'), timedGrid: document.getElementById('timed-grid'), timedStatus: document.getElementById('timed-status'), timerLabel: document.getElementById('timer-label'), timerFill: document.getElementById('timer-fill'),
-    reviveGrid: document.getElementById('revive-grid'),
-    gauntletCurrent: document.getElementById('gauntlet-current'), gauntletTotal: document.getElementById('gauntlet-total'), gauntletTrack: document.getElementById('gauntlet-track'), gauntletFill: document.getElementById('gauntlet-fill'), gauntletGrid: document.getElementById('gauntlet-grid'), gauntletStatus: document.getElementById('gauntlet-status'),
-    resultTitle: document.getElementById('result-title'), resultSubtitle: document.getElementById('result-subtitle'), winnerCard: document.getElementById('winner-card'), resultStats: document.getElementById('result-stats'), topThreeGrid: document.getElementById('top-three-grid'), journeyCopy: document.getElementById('journey-copy'), streakToast: document.getElementById('streak-toast')
+    qualifierCurrent: document.getElementById('qualifier-current'), qualifierTrack: document.getElementById('qualifier-track'), qualifierFill: document.getElementById('qualifier-fill'), qualifierGrid: document.getElementById('qualifier-grid'), qualifierStatus: document.getElementById('qualifier-status'),
+    postRevivalGrid: document.getElementById('post-revival-grid'), postRevivalStatus: document.getElementById('post-revival-status'), confirmPostRevival: document.getElementById('confirm-post-revival'),
+    duelChip: document.getElementById('duel-chip'), duelKicker: document.getElementById('duel-kicker'), duelTitle: document.getElementById('duel-title'), duelCopy: document.getElementById('duel-copy'), duelGrid: document.getElementById('duel-grid'), duelStatus: document.getElementById('duel-status'),
+    resultTitle: document.getElementById('result-title'), resultSubtitle: document.getElementById('result-subtitle'), winnerCard: document.getElementById('winner-card'), resultStats: document.getElementById('result-stats'), topThree: document.getElementById('top-three'), biasSection: document.getElementById('bias-section'), biasGallery: document.getElementById('bias-gallery'), groupRanking: document.getElementById('group-ranking'), journeyCopy: document.getElementById('journey-copy'), toast: document.getElementById('streak-toast')
   };
 
   function createInitialState() {
     return {
-      phase: 'intro', firstRound: [], firstIndex: 0, firstAnswers: {},
-      styleRound: [], styleIndex: 0, styleAnswers: {},
-      rosterPool: [], rosterSelected: [],
-      timedDuels: [], timedIndex: 0, timedWinners: [], timedLosers: [], timedBye: null,
-      duelRevivedId: null, gauntletOrder: [], gauntletIndex: 1, championId: null, gauntletWins: {}, completedAt: null
+      phase: 'intro', wallOrder: [], wallPage: 0, wallPicks: {}, wallPhotoIndexes: {}, firstRound: [],
+      reviewIds: [], reviewSelections: {}, styleAnswers: {}, reviewAdvanced: [],
+      secondChanceIds: [], secondChanceSelections: {}, secondChanceAdvanced: [],
+      rosterPool: [], rosterSelected: [], qualifierGroups: [], qualifierIndex: 0, qualifierWinners: [],
+      postRevivalPool: [], postRevivalSelected: [], revivalDuels: [], revivalIndex: 0, revivalWinners: [], finalFour: [],
+      semifinalDuels: [], semifinalIndex: 0, semifinalWinners: [], finalists: [], championId: null, completedAt: null
     };
-  }
-
-  function saveState() {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { /* optional */ }
-  }
-
-  function loadState() {
-    try {
-      var saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
-      if (saved && Array.isArray(saved.firstRound) && saved.firstRound.length === data.people.length && saved.firstAnswers) {
-        state = saved; return true;
-      }
-    } catch (error) { /* ignore */ }
-    return false;
   }
 
   function showScreen(name) {
@@ -56,322 +46,373 @@
     saveState();
   }
 
-  function stopTimer() {
-    if (timerId) window.clearInterval(timerId);
-    timerId = null;
+  function saveState() {
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { /* optional */ }
   }
+
+  function loadState() {
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+      if (saved && Array.isArray(saved.wallOrder) && saved.wallOrder.length === data.people.length) { state = saved; return true; }
+    } catch (error) { /* ignore */ }
+    return false;
+  }
+
+  function photosFor(personId) { return logic.photosFor(data, personId); }
+  function unique(items) { return items.filter(function (item, index, all) { return all.indexOf(item) === index; }); }
+  function selectedWallIds() { return state.wallOrder.filter(function (id) { return state.wallPicks[id] >= 3; }); }
+  function reviewAdvancedIds() { return state.reviewIds.filter(function (id) { return (state.reviewSelections[id] || []).length > 0; }); }
+  function secondChanceAdvancedIds() { return state.secondChanceIds.filter(function (id) { return (state.secondChanceSelections[id] || []).length > 0; }); }
+  function photoAdvancedIds() { return unique(state.reviewAdvanced.concat(state.secondChanceAdvanced)); }
+  function anonymousNumber(personId) { return String(state.wallOrder.indexOf(personId) + 1).padStart(2, '0'); }
+  function preferredPhoto(personId) { return logic.preferredPhoto(data, personId, state.styleAnswers, state.firstRound); }
 
   function updateProgress(currentEl, totalEl, trackEl, fillEl, index, total) {
     var current = Math.min(index + 1, Math.max(total, 1));
     currentEl.textContent = String(current).padStart(2, '0');
-    totalEl.textContent = '/ ' + String(total).padStart(2, '0');
-    trackEl.setAttribute('aria-valuemax', String(Math.max(total, 1)));
-    trackEl.setAttribute('aria-valuenow', String(current));
+    if (totalEl) totalEl.textContent = '/ ' + String(total).padStart(2, '0');
+    trackEl.setAttribute('aria-valuemax', String(Math.max(total, 1))); trackEl.setAttribute('aria-valuenow', String(current));
     fillEl.style.width = (total ? current / total * 100 : 100) + '%';
   }
 
-  function personPhoto(personId) {
-    return logic.preferredPhoto(data, personId, state.styleAnswers, state.firstRound);
-  }
-
-  function anonymousNumber(personId) {
-    var index = state.firstRound.findIndex(function (item) { return item.personId === personId; });
-    return String(index >= 0 ? index + 1 : 0).padStart(2, '0');
-  }
-
   function startTournament() {
-    stopTimer(); isTransitioning = false; state = createInitialState();
-    state.firstRound = logic.buildFirstRound(data);
-    state.phase = 'rating'; renderFirst();
+    isTransitioning = false; state = createInitialState();
+    state.wallOrder = logic.shuffle(data.people).map(function (person) { return person.id; });
+    state.firstRound = state.wallOrder.map(function (personId) { return { personId: personId, photo: photosFor(personId)[0] }; });
+    renderWall();
   }
 
-  function renderFirst() {
-    if (state.firstIndex >= state.firstRound.length) return finishFirst();
-    showScreen('rating'); isTransitioning = false;
-    updateProgress(els.firstCurrent, els.firstTotal, els.firstTrack, els.firstFill, state.firstIndex, state.firstRound.length);
-    var item = state.firstRound[state.firstIndex]; var photo = item.photo; var person = peopleById[item.personId]; var answer = state.firstAnswers[item.personId];
-    els.ratingStage.setAttribute('data-person', person.id); els.ratingStage.setAttribute('data-style', photo.styleId);
-    els.ratingImage.src = photo.image; els.ratingImage.alt = '匿名候选 ' + anonymousNumber(person.id) + ' 的评分照片';
-    els.ratingMember.textContent = '匿名候选 ' + anonymousNumber(person.id); els.ratingGroup.textContent = '身份已隐藏';
-    els.ratingStatus.textContent = answer ? firstReaction(answer) : '第一轮每位成员都会出现一次';
-    document.querySelectorAll('[data-first-score]').forEach(function (button) {
-      var selected = Number(button.getAttribute('data-first-score')) === answer;
-      button.classList.toggle('is-selected', selected); button.setAttribute('aria-pressed', selected ? 'true' : 'false'); button.disabled = false;
+  function renderWall() {
+    showScreen('wall'); isTransitioning = false;
+    var totalPages = Math.ceil(state.wallOrder.length / PAGE_SIZE);
+    updateProgress(els.wallCurrent, els.wallTotal, els.wallTrack, els.wallFill, state.wallPage, totalPages);
+    var pageIds = state.wallOrder.slice(state.wallPage * PAGE_SIZE, (state.wallPage + 1) * PAGE_SIZE);
+    els.wallGrid.innerHTML = '';
+    pageIds.forEach(function (personId) { els.wallGrid.appendChild(buildWallCard(personId)); });
+    var count = selectedWallIds().length;
+    els.wallStatus.textContent = '心动席位 ' + count + ' / ' + MAX_WALL_PICKS + (count < MIN_WALL_PICKS ? ' · 扫完至少留下 ' + MIN_WALL_PICKS + ' 位' : ' · 已达到复核门槛');
+    els.wallNext.textContent = state.wallPage === totalPages - 1 ? '进入双图复核' : '下一墙，继续扫';
+    document.querySelector('[data-action="wall-prev"]').disabled = state.wallPage === 0;
+  }
+
+  function buildWallCard(personId) {
+    var photos = photosFor(personId); var index = state.wallPhotoIndexes[personId] || 0; var photo = photos[index % photos.length]; var pick = state.wallPicks[personId] || 0;
+    var card = document.createElement('article'); card.className = 'wall-card'; card.setAttribute('data-person-id', personId);
+    card.innerHTML = '<button class="wall-photo-toggle" type="button" aria-label="切换匿名候选 ' + anonymousNumber(personId) + ' 的另一种风格"><img src="' + photo.image + '" alt="匿名候选 ' + anonymousNumber(personId) + ' 的风格照片"><span class="wall-number">' + anonymousNumber(personId) + '</span><span class="flip-hint">点我换造型 ↻</span></button><button class="heart-pick' + (pick === 3 ? ' is-heart' : '') + (pick === 4 ? ' is-bias' : '') + '" type="button" aria-label="标记匿名候选 ' + anonymousNumber(personId) + '"><span>' + (pick === 4 ? '♥♥' : (pick === 3 ? '♥' : '♡')) + '</span><b>' + (pick === 4 ? '本命' : (pick === 3 ? '心动' : '收下')) + '</b></button>';
+    card.querySelector('.wall-photo-toggle').addEventListener('click', function () { toggleWallPhoto(personId); });
+    bindHeartButton(card.querySelector('.heart-pick'), personId);
+    return card;
+  }
+
+  function toggleWallPhoto(personId) {
+    var photos = photosFor(personId); state.wallPhotoIndexes[personId] = ((state.wallPhotoIndexes[personId] || 0) + 1) % photos.length;
+    var item = state.firstRound.filter(function (entry) { return entry.personId === personId; })[0];
+    if (item) item.photo = photos[state.wallPhotoIndexes[personId]];
+    renderWall();
+  }
+
+  function bindHeartButton(button, personId) {
+    var clickTimer = null;
+    button.addEventListener('click', function (event) {
+      event.preventDefault();
+      if (event.detail === 0) return setWallPick(personId, 3);
+      if (clickTimer) {
+        window.clearTimeout(clickTimer); clickTimer = null;
+        setWallPick(personId, 4); showToast('双击命中！本命警报已拉响'); return;
+      }
+      clickTimer = window.setTimeout(function () { clickTimer = null; setWallPick(personId, 3); }, 320);
     });
-    document.querySelector('[data-action="back-first"]').disabled = state.firstIndex === 0;
   }
 
-  function firstReaction(score) {
-    if (score === 4) return '本命雷达亮起：直接进入双风格复核';
-    if (score === 3) return '心动确认：进入双风格复核';
-    if (score === 1) return '无感也要复核：看看换个风格会不会逆转';
-    return '有点帅但未到心动：暂时进入待复活名单';
+  function setWallPick(personId, score) {
+    var current = state.wallPicks[personId] || 0; var count = selectedWallIds().length;
+    if (!current && count >= MAX_WALL_PICKS) return showToast('心动区满员啦，先放回一位再收新人');
+    if (current === score) delete state.wallPicks[personId]; else state.wallPicks[personId] = score;
+    renderWall();
   }
 
-  function rateFirst(score) {
-    if (isTransitioning) return;
-    isTransitioning = true;
-    var item = state.firstRound[state.firstIndex]; state.firstAnswers[item.personId] = score;
-    els.ratingStatus.textContent = firstReaction(score);
-    document.querySelectorAll('[data-first-score]').forEach(function (button) { button.disabled = true; });
-    saveState(); window.setTimeout(function () { state.firstIndex += 1; renderFirst(); }, 360);
+  function nextWall() {
+    var totalPages = Math.ceil(state.wallOrder.length / PAGE_SIZE);
+    if (state.wallPage < totalPages - 1) { state.wallPage += 1; return renderWall(); }
+    var selected = selectedWallIds();
+    if (selected.length < MIN_WALL_PICKS) return showToast('雷达还差 ' + (MIN_WALL_PICKS - selected.length) + ' 次心动，回去再捞几位吧');
+    prepareReview(selected);
   }
 
-  function backFirst() { if (!isTransitioning && state.firstIndex > 0) { state.firstIndex -= 1; renderFirst(); } }
-
-  function finishFirst() {
-    var ids = logic.styleCandidateIds(state.firstRound, state.firstAnswers);
-    state.styleRound = logic.buildStyleRound(data, ids); state.styleIndex = 0;
-    if (!state.styleRound.length) return finishStyles();
-    renderStyle();
+  function prepareReview(ids) {
+    state.reviewIds = ids.slice().sort(function (a, b) { return (state.wallPicks[b] || 0) - (state.wallPicks[a] || 0); });
+    state.reviewSelections = {};
+    state.reviewIds.forEach(function (id) {
+      var photos = photosFor(id); var index = state.wallPhotoIndexes[id] || 0;
+      state.reviewSelections[id] = [photos[index % photos.length].id];
+    });
+    renderReview();
   }
 
-  function renderStyle() {
-    if (state.styleIndex >= state.styleRound.length) return finishStyles();
-    showScreen('style'); isTransitioning = false;
-    updateProgress(els.styleCurrent, els.styleTotal, els.styleTrack, els.styleFill, state.styleIndex, state.styleRound.length);
-    var item = state.styleRound[state.styleIndex]; var person = peopleById[item.personId]; var answer = state.styleAnswers[item.personId] || {};
-    els.styleKicker.textContent = '匿名候选 ' + anonymousNumber(person.id); els.stylePair.innerHTML = '';
-    item.photos.forEach(function (photo, index) {
-      var card = document.createElement('article'); card.className = 'style-card';
-      card.innerHTML = '<div class="style-photo" data-person="' + person.id + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="匿名候选的第 ' + (index + 1) + ' 种风格照片"><span>0' + (index + 1) + ' · ' + photo.styleLabel + '</span></div><div class="mini-score" data-photo-id="' + photo.id + '"><button type="button" data-style-score="1">无感</button><button type="button" data-style-score="3">心动</button><button type="button" data-style-score="4">本命</button></div>';
-      Array.prototype.slice.call(card.querySelectorAll('[data-style-score]')).forEach(function (button) {
-        var selected = answer[photo.id] === Number(button.getAttribute('data-style-score'));
-        button.classList.toggle('is-selected', selected); button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  function renderReview() {
+    showScreen('review'); els.reviewGrid.innerHTML = '';
+    state.reviewIds.forEach(function (personId) {
+      var card = document.createElement('article'); card.className = 'review-card';
+      var selected = state.reviewSelections[personId] || []; var photos = photosFor(personId).slice(0, 2);
+      card.innerHTML = '<div class="review-card-head"><span>候选 ' + anonymousNumber(personId) + '</span><b>' + (state.wallPicks[personId] === 4 ? '本命入场' : '二次确认') + '</b></div><div class="review-photo-pair"></div>';
+      var pair = card.querySelector('.review-photo-pair');
+      photos.forEach(function (photo, index) {
+        var button = document.createElement('button'); button.type = 'button'; button.className = 'review-photo' + (selected.indexOf(photo.id) >= 0 ? ' is-selected' : '');
+        button.innerHTML = '<img src="' + photo.image + '" alt="匿名候选 ' + anonymousNumber(personId) + ' 风格 ' + (index + 1) + '"><span>' + photo.styleLabel + '</span><i>♥</i>';
+        button.addEventListener('click', function () { toggleReviewPhoto(personId, photo.id); }); pair.appendChild(button);
       });
-      els.stylePair.appendChild(card);
+      els.reviewGrid.appendChild(card);
     });
-    updateStyleReaction(item); document.querySelector('[data-action="back-style"]').disabled = state.styleIndex === 0;
+    updateReviewStatus();
   }
 
-  function styleScore(photoId, score) {
-    if (isTransitioning) return;
-    var item = state.styleRound[state.styleIndex]; state.styleAnswers[item.personId] = state.styleAnswers[item.personId] || {};
-    state.styleAnswers[item.personId][photoId] = score; renderStyle();
-    var answer = state.styleAnswers[item.personId];
-    var complete = item.photos.every(function (photo) { return typeof answer[photo.id] === 'number'; });
-    if (complete) {
-      isTransitioning = true;
-      Array.prototype.slice.call(els.stylePair.querySelectorAll('[data-style-score]')).forEach(function (button) { button.disabled = true; });
-      saveState();
-      window.setTimeout(function () { state.styleIndex += 1; renderStyle(); }, 680);
+  function toggleReviewPhoto(personId, photoId) {
+    var selected = state.reviewSelections[personId] || []; var index = selected.indexOf(photoId);
+    if (index >= 0) selected.splice(index, 1); else selected.push(photoId);
+    state.reviewSelections[personId] = selected; renderReview();
+  }
+
+  function updateReviewStatus() {
+    var count = reviewAdvancedIds().length;
+    els.reviewStatus.textContent = '复核后保留 ' + count + ' 位 · 目标 ' + MIN_REVIEW_ADVANCERS + '–' + MAX_REVIEW_ADVANCERS + ' 位';
+    els.confirmReview.disabled = count < MIN_REVIEW_ADVANCERS || count > MAX_REVIEW_ADVANCERS;
+  }
+
+  function confirmReview() {
+    var advanced = reviewAdvancedIds();
+    if (advanced.length < MIN_REVIEW_ADVANCERS || advanced.length > MAX_REVIEW_ADVANCERS) return showToast('请把晋级人数控制在 ' + MIN_REVIEW_ADVANCERS + '–' + MAX_REVIEW_ADVANCERS + ' 位');
+    state.reviewAdvanced = advanced; state.styleAnswers = {};
+    state.reviewIds.forEach(function (id) {
+      state.styleAnswers[id] = {}; var selected = state.reviewSelections[id] || [];
+      photosFor(id).slice(0, 2).forEach(function (photo) { state.styleAnswers[id][photo.id] = selected.indexOf(photo.id) >= 0 ? (state.wallPicks[id] === 4 ? 4 : 3) : 1; });
+    });
+    prepareSecondChance();
+  }
+
+  function prepareSecondChance() {
+    state.secondChanceIds = state.wallOrder.filter(function (id) {
+      return state.reviewIds.indexOf(id) < 0 && (state.wallPhotoIndexes[id] || 0) === 0;
+    });
+    state.secondChanceSelections = {};
+    state.secondChanceIds.forEach(function (id) { state.secondChanceSelections[id] = []; });
+    renderSecondChance();
+  }
+
+  function renderSecondChance() {
+    showScreen('second-chance'); els.secondChanceGrid.innerHTML = '';
+    state.secondChanceIds.forEach(function (personId) {
+      var card = document.createElement('article'); card.className = 'review-card';
+      var selected = state.secondChanceSelections[personId] || [];
+      card.innerHTML = '<div class="review-card-head"><span>候选 ' + anonymousNumber(personId) + '</span><b>等待翻盘</b></div><div class="review-photo-pair"></div>';
+      var pair = card.querySelector('.review-photo-pair');
+      photosFor(personId).slice(0, 2).forEach(function (photo, index) {
+        var button = document.createElement('button'); button.type = 'button'; button.className = 'review-photo' + (selected.indexOf(photo.id) >= 0 ? ' is-selected' : '');
+        button.innerHTML = '<img src="' + photo.image + '" alt="匿名候选 ' + anonymousNumber(personId) + ' 风格 ' + (index + 1) + '"><span>' + photo.styleLabel + '</span><i>♥</i>';
+        button.addEventListener('click', function () { toggleSecondChancePhoto(personId, photo.id); }); pair.appendChild(button);
+      });
+      els.secondChanceGrid.appendChild(card);
+    });
+    updateSecondChanceStatus();
+  }
+
+  function toggleSecondChancePhoto(personId, photoId) {
+    var selected = state.secondChanceSelections[personId] || []; var index = selected.indexOf(photoId);
+    if (index >= 0) selected.splice(index, 1); else {
+      var currentAdvanced = state.reviewAdvanced.length + secondChanceAdvancedIds().length;
+      if (!selected.length && currentAdvanced >= MAX_REVIEW_ADVANCERS) return showToast('心动晋级区先留到 ' + MAX_REVIEW_ADVANCERS + ' 位，给名字复活赛留两个座位');
+      selected.push(photoId);
     }
+    state.secondChanceSelections[personId] = selected; renderSecondChance();
   }
 
-  function updateStyleReaction(item) {
-    var answer = state.styleAnswers[item.personId] || {}; var scores = item.photos.map(function (photo) { return answer[photo.id]; });
-    var complete = scores.every(function (score) { return typeof score === 'number'; });
-    if (!complete) { els.styleReaction.textContent = '请为两种风格分别做选择'; return; }
-    var loved = scores.filter(function (score) { return score >= 3; }).length; var bias = scores.filter(function (score) { return score === 4; }).length;
-    if (bias === 2) els.styleReaction.textContent = '双面本命：风格已经不重要，人最重要';
-    else if (loved === 2) els.styleReaction.textContent = '两种都心动：你是这位成员的全风格受众';
-    else if (loved === 1) els.styleReaction.textContent = '单风格狙击：只有一面精准命中你';
-    else els.styleReaction.textContent = '反差复核完成：两种风格都没有逆转';
+  function updateSecondChanceStatus() {
+    var count = secondChanceAdvancedIds().length; var total = state.reviewAdvanced.length + count;
+    els.secondChanceStatus.textContent = count ? '成功翻盘 ' + count + ' 位 · 当前照片晋级共 ' + total + ' / ' + MAX_REVIEW_ADVANCERS + ' 位' : '暂时无人翻盘 · 可以直接继续';
   }
 
-  function backStyle() { if (!isTransitioning && state.styleIndex > 0) { state.styleIndex -= 1; renderStyle(); } }
-
-  function finishStyles() {
-    var advanced = logic.styleAdvancerIds(state.styleRound, state.styleAnswers);
-    state.rosterPool = data.people.map(function (person) { return person.id; }).filter(function (id) { return advanced.indexOf(id) < 0; });
-    state.rosterSelected = state.rosterSelected.filter(function (id) { return state.rosterPool.indexOf(id) >= 0; });
-    if (!state.rosterPool.length) return prepareTimed();
+  function confirmSecondChance() {
+    state.secondChanceAdvanced = secondChanceAdvancedIds();
+    state.secondChanceIds.forEach(function (id) {
+      state.styleAnswers[id] = state.styleAnswers[id] || {}; var selected = state.secondChanceSelections[id] || [];
+      photosFor(id).slice(0, 2).forEach(function (photo) { state.styleAnswers[id][photo.id] = selected.indexOf(photo.id) >= 0 ? 3 : 1; });
+    });
+    var advanced = photoAdvancedIds();
+    state.rosterPool = state.wallOrder.filter(function (id) { return advanced.indexOf(id) < 0; }); state.rosterSelected = [];
     renderRoster();
   }
 
   function renderRoster() {
-    showScreen('roster'); var limit = logic.resurrectionLimit(state.rosterPool.length);
-    els.rosterTicket.textContent = '最多 ' + limit + ' 张复活票';
-    els.rosterCopy.textContent = state.rosterPool.length + ' 位暂未晋级。最多选择 ' + limit + ' 位，仅凭名字给他们一次返场机会。';
+    showScreen('roster'); var limit = Math.min(2, state.rosterPool.length);
+    els.rosterTicket.textContent = limit + ' 张复活票'; els.rosterCopy.textContent = '这里有 ' + state.rosterPool.length + ' 位遗珠。照片先放一边，单凭名字选回 ' + limit + ' 位。';
     els.nameGrid.innerHTML = '';
-    state.rosterPool.forEach(function (personId, cloudIndex) {
-      var person = peopleById[personId]; var button = document.createElement('button'); button.type = 'button'; button.className = 'name-pick'; button.setAttribute('data-person-id', personId);
-      button.classList.add('cloud-size-' + (cloudIndex % 3), 'cloud-tilt-' + (cloudIndex % 5));
-      button.classList.toggle('is-selected', state.rosterSelected.indexOf(personId) >= 0); button.innerHTML = '<strong>' + person.name + '</strong>';
+    state.rosterPool.forEach(function (personId, index) {
+      var button = document.createElement('button'); button.type = 'button'; button.className = 'name-pick cloud-size-' + (index % 3) + ' cloud-tilt-' + (index % 5); button.setAttribute('data-person-id', personId);
+      button.classList.toggle('is-selected', state.rosterSelected.indexOf(personId) >= 0); button.innerHTML = '<strong>' + peopleById[personId].name + '</strong>';
       button.addEventListener('click', function () { toggleRoster(personId, limit); }); els.nameGrid.appendChild(button);
     });
-    els.rosterStatus.textContent = state.rosterSelected.length ? '已选择 ' + state.rosterSelected.length + ' / ' + limit + ' 位' : '至少选择 1 位复活';
-    els.confirmRoster.disabled = state.rosterSelected.length < 1;
+    els.rosterStatus.textContent = '已复活 ' + state.rosterSelected.length + ' / ' + limit + ' 位'; els.confirmRoster.disabled = state.rosterSelected.length !== limit;
   }
 
   function toggleRoster(personId, limit) {
     var index = state.rosterSelected.indexOf(personId);
-    if (index >= 0) state.rosterSelected.splice(index, 1);
-    else if (state.rosterSelected.length < limit) state.rosterSelected.push(personId);
-    else return showToast('复活票已用完，先取消一位再选择');
+    if (index >= 0) state.rosterSelected.splice(index, 1); else if (state.rosterSelected.length < limit) state.rosterSelected.push(personId); else return showToast('两张票都用完啦，先换下一位');
     renderRoster();
   }
 
-  function prepareTimed() {
-    var advanced = logic.styleAdvancerIds(state.styleRound, state.styleAnswers);
-    var entrants = advanced.concat(state.rosterSelected).filter(function (id, index, all) { return all.indexOf(id) === index; });
-    var bracket = logic.buildTimedDuels(entrants); state.timedDuels = bracket.duels; state.timedBye = bracket.bye; state.timedIndex = 0; state.timedWinners = []; state.timedLosers = [];
-    if (!state.timedDuels.length) return finishTimed(); renderTimed();
+  function prepareQualifier() {
+    var entrants = logic.shuffle(unique(photoAdvancedIds().concat(state.rosterSelected)));
+    if (entrants.length < 8 || entrants.length > 16) return showToast('抢位赛需要 8–16 位候选');
+    state.qualifierGroups = [[], [], [], []]; entrants.forEach(function (id, index) { state.qualifierGroups[index % 4].push(id); });
+    state.qualifierIndex = 0; state.qualifierWinners = []; renderQualifier();
   }
 
-  function renderTimed() {
-    stopTimer(); if (state.timedIndex >= state.timedDuels.length) return finishTimed();
-    showScreen('timed'); isTransitioning = false;
-    updateProgress(els.timedCurrent, els.timedTotal, els.timedTrack, els.timedFill, state.timedIndex, state.timedDuels.length);
-    var duel = state.timedDuels[state.timedIndex]; els.timedGrid.innerHTML = ''; els.timedStatus.textContent = '';
-    duel.personIds.forEach(function (personId, index) { els.timedGrid.appendChild(buildDuelCard(personId, index, 'timed')); });
-    startTimer(duel);
+  function renderQualifier() {
+    if (state.qualifierIndex >= state.qualifierGroups.length) return preparePostRevival();
+    showScreen('qualifier'); isTransitioning = false;
+    updateProgress(els.qualifierCurrent, null, els.qualifierTrack, els.qualifierFill, state.qualifierIndex, 4);
+    els.qualifierGrid.innerHTML = ''; els.qualifierStatus.textContent = '';
+    state.qualifierGroups[state.qualifierIndex].forEach(function (id, index) { els.qualifierGrid.appendChild(buildBattleCard(id, index, 'qualifier')); });
   }
 
-  function buildDuelCard(personId, index, mode) {
-    var person = peopleById[personId]; var photo = personPhoto(personId); var button = document.createElement('button'); button.type = 'button'; button.className = 'duel-card'; button.setAttribute('data-person-id', personId);
-    var badge = mode === 'gauntlet' && index === 0 ? '擂主' : (mode === 'gauntlet' ? '攻擂' : '0' + (index + 1));
-    var anonymousTitle = mode === 'gauntlet' ? badge : '候选 ' + String(index + 1).padStart(2, '0');
-    button.innerHTML = '<span class="duel-photo" data-person="' + personId + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="匿名' + anonymousTitle + '照片"><span class="duel-number">' + badge + '</span></span><span class="duel-cta"><strong>' + anonymousTitle + '</strong><small>身份将在最后揭晓</small><b>' + (mode === 'gauntlet' ? '留在擂台 ♥' : '选他晋级 ♥') + '</b></span>';
-    button.addEventListener('click', function () { if (mode === 'timed') chooseTimed(personId); else chooseGauntlet(personId); }); return button;
+  function buildBattleCard(personId, index, mode) {
+    var photo = preferredPhoto(personId); var button = document.createElement('button'); button.type = 'button'; button.className = mode === 'qualifier' ? 'battle-card' : 'duel-card'; button.setAttribute('data-person-id', personId);
+    var label = mode === 'qualifier' ? '候选 ' + String(index + 1).padStart(2, '0') : (index === 0 ? '左边这位' : '右边这位');
+    button.innerHTML = '<span class="duel-photo" data-person="' + personId + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="匿名' + label + '照片"><span class="duel-number">' + String(index + 1).padStart(2, '0') + '</span></span><span class="duel-cta"><strong>' + label + '</strong><small>身份最后揭晓</small><b>就是他 ♥</b></span>';
+    button.addEventListener('click', function () { if (mode === 'qualifier') chooseQualifier(personId); else if (mode === 'challenge') chooseRevivalChallenge(personId); else chooseDuel(personId); }); return button;
   }
 
-  function startTimer(duel) {
-    timerRemaining = 80; els.timerLabel.textContent = '8.0 秒'; els.timerFill.style.width = '100%';
-    timerId = window.setInterval(function () {
-      timerRemaining -= 1; els.timerLabel.textContent = (timerRemaining / 10).toFixed(1) + ' 秒'; els.timerFill.style.width = Math.max(0, timerRemaining / 80 * 100) + '%';
-      if (timerRemaining <= 0) {
-        stopTimer(); var scores = duel.personIds.map(function (id) { return logic.personScore(id, state.firstAnswers, state.styleAnswers, state.timedWinners, state.gauntletWins); });
-        var winner = scores[0] === scores[1] ? duel.personIds[Math.floor(Math.random() * 2)] : duel.personIds[scores[0] > scores[1] ? 0 : 1];
-        els.timedStatus.textContent = '时间到！已按此前的心动值自动保送'; chooseTimed(winner, true);
-      }
-    }, 100);
+  function chooseQualifier(personId) {
+    if (isTransitioning) return; isTransitioning = true; state.qualifierWinners.push(personId);
+    var chosenPhoto = preferredPhoto(personId); state.styleAnswers[personId] = state.styleAnswers[personId] || {};
+    if (!Object.keys(state.styleAnswers[personId]).some(function (photoId) { return state.styleAnswers[personId][photoId] >= 3; })) state.styleAnswers[personId][chosenPhoto.id] = 3;
+    Array.prototype.slice.call(els.qualifierGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
+    els.qualifierStatus.textContent = '抢位成功！下一组正在赶来'; saveState();
+    window.setTimeout(function () { state.qualifierIndex += 1; renderQualifier(); }, 520);
   }
 
-  function chooseTimed(winnerId, timedOut) {
-    if (isTransitioning) return; isTransitioning = true; stopTimer();
-    var duel = state.timedDuels[state.timedIndex]; var loserId = duel.personIds.filter(function (id) { return id !== winnerId; })[0];
-    state.timedWinners.push(winnerId); state.timedLosers.push(loserId);
-    Array.prototype.slice.call(els.timedGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === winnerId); });
-    if (!timedOut) els.timedStatus.textContent = '你的选择已晋级，另一位进入败者区';
-    saveState(); window.setTimeout(function () { state.timedIndex += 1; renderTimed(); }, 650);
+  function preparePostRevival() {
+    state.postRevivalPool = [].concat.apply([], state.qualifierGroups).filter(function (id) { return state.qualifierWinners.indexOf(id) < 0; });
+    state.postRevivalSelected = []; renderPostRevival();
   }
 
-  function finishTimed() {
-    stopTimer();
-    if (state.timedLosers.length) return renderRevive();
-    startGauntlet(state.timedWinners.concat(state.timedBye ? [state.timedBye] : []));
-  }
-
-  function renderRevive() {
-    showScreen('revive'); els.reviveGrid.innerHTML = '';
-    state.timedLosers.forEach(function (personId) {
-      var photo = personPhoto(personId); var button = document.createElement('button'); button.type = 'button'; button.className = 'revive-card';
-      button.innerHTML = '<span class="revive-photo" data-person="' + personId + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="匿名败者照片"></span><strong>匿名败者</strong><small>最后再揭晓身份</small><b>复活他</b>';
-      button.addEventListener('click', function () { state.duelRevivedId = personId; startGauntlet(state.timedWinners.concat(state.timedBye ? [state.timedBye] : []).concat([personId])); }); els.reviveGrid.appendChild(button);
+  function renderPostRevival() {
+    showScreen('post-revival'); els.postRevivalGrid.innerHTML = '';
+    state.postRevivalPool.forEach(function (personId, index) {
+      var photo = preferredPhoto(personId); var selected = state.postRevivalSelected.indexOf(personId) >= 0;
+      var button = document.createElement('button'); button.type = 'button'; button.className = 'battle-card revival-pick' + (selected ? ' is-selected' : ''); button.setAttribute('data-person-id', personId);
+      button.innerHTML = '<span class="duel-photo" data-person="' + personId + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="匿名复活候选照片"><span class="duel-number">' + String(index + 1).padStart(2, '0') + '</span></span><span class="duel-cta"><strong>返场候选 ' + String(index + 1).padStart(2, '0') + '</strong><small>身份最后揭晓</small><b>' + (selected ? '已拿到复活票 ♥' : '给他复活票') + '</b></span>';
+      button.addEventListener('click', function () { togglePostRevival(personId); }); els.postRevivalGrid.appendChild(button);
     });
+    els.postRevivalStatus.textContent = '已选择 ' + state.postRevivalSelected.length + ' / 2 位'; els.confirmPostRevival.disabled = state.postRevivalSelected.length !== 2;
   }
 
-  function startGauntlet(personIds) {
-    state.gauntletOrder = logic.buildGauntlet(personIds.filter(function (id, index, all) { return all.indexOf(id) === index; })); state.gauntletIndex = 1; state.championId = state.gauntletOrder[0] || null; state.gauntletWins = {};
-    if (state.gauntletOrder.length <= 1) return showResults(); renderGauntlet();
+  function togglePostRevival(personId) {
+    var index = state.postRevivalSelected.indexOf(personId);
+    if (index >= 0) state.postRevivalSelected.splice(index, 1); else if (state.postRevivalSelected.length < 2) state.postRevivalSelected.push(personId); else return showToast('复活票只有两张，先换下一位');
+    renderPostRevival();
   }
 
-  function renderGauntlet() {
-    if (state.gauntletIndex >= state.gauntletOrder.length) return showResults();
-    showScreen('gauntlet'); isTransitioning = false;
-    updateProgress(els.gauntletCurrent, els.gauntletTotal, els.gauntletTrack, els.gauntletFill, state.gauntletIndex - 1, state.gauntletOrder.length - 1);
-    var challengerId = state.gauntletOrder[state.gauntletIndex]; els.gauntletGrid.innerHTML = ''; els.gauntletStatus.textContent = '';
-    els.gauntletGrid.appendChild(buildDuelCard(state.championId, 0, 'gauntlet')); els.gauntletGrid.appendChild(buildDuelCard(challengerId, 1, 'gauntlet'));
+  function prepareRevivalChallenges() {
+    state.postRevivalSelected.forEach(function (id) {
+      var photo = preferredPhoto(id); state.styleAnswers[id] = state.styleAnswers[id] || {};
+      if (!Object.keys(state.styleAnswers[id]).some(function (photoId) { return state.styleAnswers[id][photoId] >= 3; })) state.styleAnswers[id][photo.id] = 3;
+    });
+    var targetOrder = logic.shuffle(state.qualifierWinners); var targets = targetOrder.slice(0, 2);
+    state.finalFour = targetOrder.slice(2); state.revivalDuels = [[state.postRevivalSelected[0], targets[0]], [state.postRevivalSelected[1], targets[1]]]; state.revivalIndex = 0; state.revivalWinners = [];
+    renderRevivalChallenge();
   }
 
-  function chooseGauntlet(winnerId) {
+  function renderRevivalChallenge() {
+    if (state.revivalIndex >= state.revivalDuels.length) { state.finalFour = state.finalFour.concat(state.revivalWinners); return prepareSemifinals(); }
+    showScreen('duel'); isTransitioning = false; els.duelGrid.innerHTML = ''; els.duelStatus.textContent = '';
+    els.duelChip.textContent = 'REVIVAL · 复活挑战 ' + (state.revivalIndex + 1) + ' / 2'; els.duelKicker.textContent = '复活者挑战暂定四强'; els.duelTitle.textContent = '这一席，重新决定'; els.duelCopy.textContent = '点出你现在更想留下的那一位。';
+    state.revivalDuels[state.revivalIndex].forEach(function (id, index) { els.duelGrid.appendChild(buildBattleCard(id, index, 'challenge')); });
+  }
+
+  function chooseRevivalChallenge(personId) {
+    if (isTransitioning) return; isTransitioning = true; state.revivalWinners.push(personId);
+    Array.prototype.slice.call(els.duelGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
+    els.duelStatus.textContent = '四强席位锁定'; saveState(); window.setTimeout(function () { state.revivalIndex += 1; renderRevivalChallenge(); }, 520);
+  }
+
+  function prepareSemifinals() {
+    var order = logic.shuffle(state.finalFour); state.semifinalDuels = [[order[0], order[1]], [order[2], order[3]]]; state.semifinalIndex = 0; state.semifinalWinners = []; renderDuel();
+  }
+
+  function renderDuel() {
+    showScreen('duel'); isTransitioning = false; els.duelGrid.innerHTML = ''; els.duelStatus.textContent = '';
+    var isFinal = state.semifinalIndex >= state.semifinalDuels.length;
+    var ids = isFinal ? state.semifinalWinners : state.semifinalDuels[state.semifinalIndex];
+    els.duelChip.textContent = isFinal ? 'FINAL · 冠军战' : 'SEMIFINAL · 半决赛 ' + (state.semifinalIndex + 1) + ' / 2';
+    els.duelKicker.textContent = isFinal ? '最后一次选择' : '四强狭路相逢'; els.duelTitle.textContent = isFinal ? '谁是你的唯一答案？' : '只能留下一位';
+    els.duelCopy.textContent = isFinal ? '点下去，身份马上揭晓。' : '不计分，只听此刻的心跳。';
+    ids.forEach(function (id, index) { els.duelGrid.appendChild(buildBattleCard(id, index, 'duel')); });
+  }
+
+  function chooseDuel(personId) {
     if (isTransitioning) return; isTransitioning = true;
-    var challengerId = state.gauntletOrder[state.gauntletIndex]; var loserId = winnerId === state.championId ? challengerId : state.championId;
-    state.championId = winnerId; state.gauntletWins[winnerId] = (state.gauntletWins[winnerId] || 0) + 1;
-    Array.prototype.slice.call(els.gauntletGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === winnerId); });
-    els.gauntletStatus.textContent = winnerId === challengerId ? '攻擂成功，新擂主诞生' : '擂主守住了这一轮';
-    saveState(); window.setTimeout(function () { state.gauntletIndex += 1; renderGauntlet(); }, 700);
+    var isFinal = state.semifinalIndex >= state.semifinalDuels.length;
+    Array.prototype.slice.call(els.duelGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
+    if (isFinal) { state.finalists = state.semifinalWinners.slice(); state.championId = personId; els.duelStatus.textContent = '答案锁定，正在揭晓身份…'; saveState(); return window.setTimeout(showResults, 650); }
+    state.semifinalWinners.push(personId); els.duelStatus.textContent = '晋级冠军战'; saveState();
+    window.setTimeout(function () { state.semifinalIndex += 1; renderDuel(); }, 520);
   }
 
-  function showResults() {
-    state.completedAt = new Date().toISOString(); renderResults(); showScreen('result');
-  }
+  function showResults() { state.completedAt = new Date().toISOString(); renderResults(); showScreen('result'); }
 
   function renderResults() {
-    var champion = peopleById[state.championId];
-    if (!champion) { els.resultTitle.textContent = '这一轮没有产生冠军'; els.resultSubtitle.textContent = '重新开赛，至少复活一位成员继续吧。'; return; }
-    var winnerPhoto = personPhoto(champion.id);
-    var photoById = {}; data.photos.forEach(function (photo) { photoById[photo.id] = photo; });
-    var personScores = {};
-    data.people.forEach(function (person) { personScores[person.id] = logic.personScore(person.id, state.firstAnswers, state.styleAnswers, state.timedWinners, state.gauntletWins); });
+    var champion = peopleById[state.championId]; if (!champion) return;
+    var winnerPhoto = preferredPhoto(champion.id); var knockoutWinners = state.qualifierWinners.concat(state.semifinalWinners); var championWins = {}; championWins[champion.id] = 2;
+    var scores = {}; data.people.forEach(function (person) { scores[person.id] = logic.personScore(person.id, state.wallPicks, state.styleAnswers, knockoutWinners, championWins); });
     var groupRows = data.groups.map(function (group) {
-      var members = data.people.filter(function (person) { return person.groupId === group.id; });
-      var total = members.reduce(function (sum, person) { return sum + personScores[person.id]; }, 0);
-      var hits = members.filter(function (person) {
-        var styles = state.styleAnswers[person.id] || {};
-        return state.firstAnswers[person.id] >= 3 || Object.keys(styles).some(function (photoId) { return styles[photoId] >= 3; });
-      });
-      var topMember = members.slice().sort(function (a, b) { return personScores[b.id] - personScores[a.id]; })[0];
-      return { group: group, average: members.length ? total / members.length : 0, hits: hits.length, topMember: topMember };
+      var members = data.people.filter(function (person) { return person.groupId === group.id; }); var total = members.reduce(function (sum, person) { return sum + scores[person.id]; }, 0);
+      var hits = members.filter(function (person) { return state.wallPicks[person.id] >= 3 || photoAdvancedIds().indexOf(person.id) >= 0; });
+      var top = members.slice().sort(function (a, b) { return scores[b.id] - scores[a.id]; })[0];
+      return { group: group, average: total / members.length, hits: hits.length, top: top };
     }).sort(function (a, b) { return b.average - a.average; });
     var styleCounts = {}; data.styles.forEach(function (style) { styleCounts[style.id] = 0; });
-    var biasPhotos = 0; var heartPhotos = 0; var singleStyleHits = 0; var doubleStyleHits = 0;
-    Object.keys(state.styleAnswers).forEach(function (personId) {
-      Object.keys(state.styleAnswers[personId]).forEach(function (photoId) {
-        var score = state.styleAnswers[personId][photoId]; var photo = photoById[photoId];
-        if (score >= 3) { heartPhotos += 1; if (photo) styleCounts[photo.styleId] = (styleCounts[photo.styleId] || 0) + 1; }
-        if (score === 4) biasPhotos += 1;
-      });
-    });
-    state.styleRound.forEach(function (item) {
-      var answers = state.styleAnswers[item.personId] || {};
-      var loved = item.photos.filter(function (photo) { return answers[photo.id] >= 3; }).length;
-      if (loved === 1) singleStyleHits += 1;
-      if (loved === 2) doubleStyleHits += 1;
-    });
-    var dominantStyle = data.styles.slice().sort(function (a, b) { return (styleCounts[b.id] || 0) - (styleCounts[a.id] || 0); })[0];
-    if (!dominantStyle || !(styleCounts[dominantStyle.id] || 0)) dominantStyle = data.styles.filter(function (style) { return style.id === winnerPhoto.styleId; })[0] || data.styles[0];
-    var profileCopy = doubleStyleHits > singleStyleHits
-      ? '你一旦认准一个人，就很容易变成“换什么造型都可以”的全风格派。'
-      : (singleStyleHits ? '你是精准风格狙击手：喜欢的是人，也很看造型有没有按下正确开关。' : '你的选择非常看第一眼，几乎不给套路和标签干扰判断。');
-
-    els.resultTitle.textContent = '答案揭晓：' + champion.name;
-    els.resultSubtitle.textContent = '名字和团体都藏起来以后，你的直觉还是把他送到了最后。';
+    var selectedPhotoCount = 0; [state.reviewSelections, state.secondChanceSelections].forEach(function (collection) { Object.keys(collection || {}).forEach(function (id) { (collection[id] || []).forEach(function (photoId) { var photo = data.photos.filter(function (p) { return p.id === photoId; })[0]; if (photo) { styleCounts[photo.styleId] += 1; selectedPhotoCount += 1; } }); }); });
+    var dominant = data.styles.slice().sort(function (a, b) { return styleCounts[b.id] - styleCounts[a.id]; })[0] || data.styles[0];
+    var biasCount = Object.keys(state.wallPicks).filter(function (id) { return state.wallPicks[id] === 4; }).length;
+    els.resultTitle.textContent = '答案揭晓：' + champion.name; els.resultSubtitle.textContent = '名字和团体都藏起来以后，你的直觉还是把他送到了最后。';
     els.winnerCard.innerHTML = '<div class="winner-photo" data-person="' + champion.id + '" data-style="' + winnerPhoto.styleId + '"><img src="' + winnerPhoto.image + '" alt="' + winnerPhoto.alt + '"><span class="crown">ULTIMATE CHAMPION</span></div><div class="winner-copy"><span>终极心动冠军</span><h3>' + champion.name + '</h3><p>' + champion.group + ' · ' + winnerPhoto.styleLabel + '</p></div>';
-    els.resultStats.innerHTML = '<article><b>' + biasPhotos + '</b><span>本命暴击照</span></article><article><b>' + heartPhotos + '</b><span>心动照片</span></article><article><b>' + dominantStyle.label + '</b><span>头号心动开关</span></article>';
-    els.topThreeGrid.innerHTML = '';
-    var maxAverage = groupRows[0] ? groupRows[0].average : 1;
-    groupRows.forEach(function (row, index) {
-      var item = document.createElement('article'); item.className = 'group-rank-item';
-      var width = Math.max(8, row.average / Math.max(maxAverage, 1) * 100);
-      item.innerHTML = '<span class="group-rank-no">' + String(index + 1).padStart(2, '0') + '</span><div class="group-rank-copy"><h4>' + row.group.name + '</h4><p>命中 ' + row.hits + ' 位 · 最高心动 ' + row.topMember.name + '</p><span class="group-rank-meter"><i style="width:' + width.toFixed(1) + '%"></i></span></div><div class="group-rank-score"><b>' + row.average.toFixed(1) + '</b><span>人均心动</span></div>';
-      els.topThreeGrid.appendChild(item);
-    });
-    els.journeyCopy.textContent = groupRows[0].group.name + ' 是你的团体偏好第一名；' + dominantStyle.result + profileCopy + ' 最终，' + champion.name + ' 成了这次匿名测试里最稳定的心动答案。';
-    lastShareText = '我的匿名 K-pop 心动测试冠军是 ' + champion.name + '（' + champion.group + '）！团体偏好第一名是 ' + groupRows[0].group.name + '，心动开关是“' + dominantStyle.label + '”。';
+    renderResultPeople(scores);
+    els.resultStats.innerHTML = '<article><b>' + biasCount + '</b><span>本命警报</span></article><article><b>' + selectedPhotoCount + '</b><span>复核保留照片</span></article><article><b>' + dominant.label + '</b><span>头号心动开关</span></article>';
+    els.groupRanking.innerHTML = ''; var maxAverage = groupRows[0].average || 1;
+    groupRows.forEach(function (row, index) { var item = document.createElement('article'); item.className = 'group-rank-item'; var width = Math.max(8, row.average / maxAverage * 100); item.innerHTML = '<span class="group-rank-no">' + String(index + 1).padStart(2, '0') + '</span><div class="group-rank-copy"><h4>' + row.group.name + '</h4><p>命中 ' + row.hits + ' 位 · 最高心动 ' + row.top.name + '</p><span class="group-rank-meter"><i style="width:' + width.toFixed(1) + '%"></i></span></div><div class="group-rank-score"><b>' + row.average.toFixed(1) + '</b><span>人均心动</span></div>'; els.groupRanking.appendChild(item); });
+    var profile = biasCount >= 3 ? '你的心动很有主见，一旦命中就会迅速升级成本命警报。' : '你更像慢热型雷达：先看感觉，再用第二种风格认真确认。';
+    els.journeyCopy.textContent = groupRows[0].group.name + ' 是你的团体偏好第一名；' + dominant.result + profile + ' 最终，' + champion.name + ' 成了这次匿名测试最稳定的答案。';
+    lastShareText = '我的匿名 K-pop 心动冠军是 ' + champion.name + '（' + champion.group + '）！团体偏好第一名是 ' + groupRows[0].group.name + '，心动开关是“' + dominant.label + '”。';
   }
 
-  function showToast(message) { els.streakToast.textContent = message; els.streakToast.classList.add('is-visible'); window.setTimeout(function () { els.streakToast.classList.remove('is-visible'); }, 1500); }
-
-  function shareResult() {
-    if (!lastShareText) renderResults(); var text = lastShareText + '\n' + window.location.href.split('?')[0];
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { showToast('已复制冠军结果'); });
-    else showToast('当前浏览器不支持复制，请截图分享');
+  function resultPersonCard(personId, rank, photoOverride) {
+    var person = peopleById[personId]; var photo = photoOverride || preferredPhoto(personId);
+    return '<article class="top-item"><div class="top-photo" data-person="' + personId + '" data-style="' + photo.styleId + '"><img src="' + photo.image + '" alt="' + photo.alt + '">' + (rank ? '<span>' + rank + '</span>' : '') + '</div><h4>' + person.name + '</h4><p>' + person.group + ' · ' + photo.styleLabel + '</p></article>';
   }
 
-  function clearSaved() { stopTimer(); try { window.localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ } state = createInitialState(); showScreen('intro'); }
+  function renderResultPeople(scores) {
+    var runnerUp = (state.finalists || []).filter(function (id) { return id !== state.championId; })[0];
+    var semifinalLosers = state.finalFour.filter(function (id) { return state.semifinalWinners.indexOf(id) < 0; }).sort(function (a, b) { return scores[b] - scores[a]; });
+    var topIds = unique([state.championId, runnerUp, semifinalLosers[0]].filter(Boolean)); els.topThree.innerHTML = '';
+    topIds.forEach(function (id, index) { els.topThree.insertAdjacentHTML('beforeend', resultPersonCard(id, index + 1)); });
+    var biasIds = state.wallOrder.filter(function (id) { return state.wallPicks[id] === 4; }); els.biasGallery.innerHTML = ''; els.biasSection.hidden = biasIds.length === 0;
+    biasIds.forEach(function (id) { var first = state.firstRound.filter(function (entry) { return entry.personId === id; })[0]; els.biasGallery.insertAdjacentHTML('beforeend', resultPersonCard(id, '', first && first.photo)); });
+  }
+
+  function showToast(message) { els.toast.textContent = message; els.toast.classList.add('is-visible'); window.setTimeout(function () { els.toast.classList.remove('is-visible'); }, 1700); }
+  function shareResult() { var text = lastShareText + '\n' + window.location.href.split('?')[0]; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { showToast('已复制冠军结果'); }); else showToast('请截图分享这份心动答案'); }
+  function clearSaved() { try { window.localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ } state = createInitialState(); showScreen('intro'); }
 
   function renderPhase() {
-    stopTimer();
-    if (state.phase === 'rating') renderFirst();
-    else if (state.phase === 'style') renderStyle();
-    else if (state.phase === 'roster') renderRoster();
-    else if (state.phase === 'timed') renderTimed();
-    else if (state.phase === 'revive') renderRevive();
-    else if (state.phase === 'gauntlet') renderGauntlet();
-    else if (state.phase === 'result') { renderResults(); showScreen('result'); }
-    else showScreen('intro');
+    if (state.phase === 'wall') renderWall(); else if (state.phase === 'review') renderReview(); else if (state.phase === 'second-chance') renderSecondChance(); else if (state.phase === 'roster') renderRoster(); else if (state.phase === 'qualifier') renderQualifier(); else if (state.phase === 'post-revival') renderPostRevival(); else if (state.phase === 'duel' && state.revivalDuels.length && state.revivalIndex < state.revivalDuels.length && state.finalFour.length < 4) renderRevivalChallenge(); else if (state.phase === 'duel') renderDuel(); else if (state.phase === 'result') { renderResults(); showScreen('result'); } else showScreen('intro');
   }
 
   document.addEventListener('click', function (event) {
-    var first = event.target.closest('[data-first-score]'); if (first) return rateFirst(Number(first.getAttribute('data-first-score')));
-    var style = event.target.closest('[data-style-score]'); if (style) return styleScore(style.closest('[data-photo-id]').getAttribute('data-photo-id'), Number(style.getAttribute('data-style-score')));
     var actionButton = event.target.closest('[data-action]'); if (!actionButton) return; var action = actionButton.getAttribute('data-action');
-    if (action === 'start' || action === 'replay' || action === 'restart') startTournament();
-    if (action === 'back-first') backFirst(); if (action === 'back-style') backStyle();
-    if (action === 'confirm-roster') prepareTimed(); if (action === 'skip-revive') startGauntlet(state.timedWinners.concat(state.timedBye ? [state.timedBye] : []));
-    if (action === 'home') showScreen('intro'); if (action === 'clear') clearSaved(); if (action === 'share') shareResult();
+    if (action === 'start' || action === 'restart' || action === 'replay') startTournament();
+    else if (action === 'wall-prev' && state.wallPage > 0) { state.wallPage -= 1; renderWall(); }
+    else if (action === 'wall-next') nextWall(); else if (action === 'confirm-review') confirmReview(); else if (action === 'confirm-second-chance') confirmSecondChance(); else if (action === 'confirm-roster') prepareQualifier(); else if (action === 'confirm-post-revival') prepareRevivalChallenges();
+    else if (action === 'home') showScreen('intro'); else if (action === 'clear') clearSaved(); else if (action === 'share') shareResult();
   });
 
   if (loadState()) renderPhase(); else showScreen('intro');

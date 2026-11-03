@@ -5,108 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f1eb">
   <title>你的 K-pop 心动取向</title>
-  <link rel="stylesheet" href="./style.css?v=12">
+  <link rel="stylesheet" href="./style.css?v=15">
 </head>
 <body>
   <main class="app-shell" id="app">
     <section class="screen intro-screen is-active" data-screen="intro" aria-labelledby="intro-title">
-      <div class="intro-art" aria-hidden="true">
-        <div class="mystery-orbit orbit-one"><span>?</span></div>
-        <div class="mystery-orbit orbit-two"><span>♥</span></div>
-        <div class="mystery-orbit orbit-three"><span>!</span></div>
-        <div class="heart-machine"><span class="heart-pulse">♥</span><b>心动雷达</b><i></i></div>
-        <span class="spark spark-a">✦</span><span class="spark spark-b">✧</span><span class="spark spark-c">♡</span>
-      </div>
-      <p class="eyebrow">匿名心动实验室</p>
-      <h1 id="intro-title">别看名字<br>只看心跳</h1>
-      <p class="intro-copy">先把身份藏起来，让审美替你做决定。最后再揭晓：到底是谁一路赢到了最后？</p>
-      <div class="intro-meta" aria-label="体验特点"><span>全程匿名</span><span>凭感觉选</span><span>结尾揭晓</span></div>
-      <button class="primary-button" type="button" data-action="start">启动心动雷达</button>
-      <p class="fine-print">没有标准答案，只有你的第一反应</p>
+      <div class="intro-art" aria-hidden="true"><div class="mystery-orbit orbit-one"><span>?</span></div><div class="mystery-orbit orbit-two"><span>♥</span></div><div class="mystery-orbit orbit-three"><span>!</span></div><div class="heart-machine"><span class="heart-pulse">♥</span><b>心动雷达</b><i></i></div><span class="spark spark-a">✦</span><span class="spark spark-b">✧</span><span class="spark spark-c">♡</span></div>
+      <p class="eyebrow">匿名心动实验室 · 今日营业</p><h1 id="intro-title">今天的心动<br>会落在谁身上？</h1>
+      <p class="intro-copy">先不看名字，也不问标准答案。跟着第一眼的感觉走，看看谁会一路留到最后。</p>
+      <div class="intro-meta" aria-label="体验特点"><span>匿名盲选</span><span>约 3–5 分钟</span><span>结尾揭晓</span></div>
+      <button class="primary-button" type="button" data-action="start">去照片墙逛一圈</button><p class="fine-print">放心，犹豫和改主意都算有效心动</p>
     </section>
 
-    <section class="screen rating-screen" data-screen="rating" aria-labelledby="rating-title">
-      <header class="topbar">
-        <button class="icon-button" type="button" data-action="back-first" aria-label="返回上一位">←</button>
-        <div class="progress-wrap"><div class="progress-label"><span id="first-current">01</span><span id="first-total">/ 46</span></div><div class="progress-track" id="first-track" role="progressbar" aria-label="第一轮进度"><div class="progress-fill" id="first-fill"></div></div></div>
-        <button class="text-button" type="button" data-action="restart">重来</button>
-      </header>
-      <div class="round-chip">ROUND 1 · 全员初筛</div>
-      <header class="rating-heading"><p class="eyebrow">第一眼普通评分</p><h2 id="rating-title">这一位，你是什么感觉？</h2></header>
-      <article class="photo-card" id="rating-card"><div class="photo-stage" id="rating-photo-stage"><img src="./assets/photos/hyunsuk-profile.jpg?v=12" alt="匿名候选照片" id="rating-image"><div class="photo-noise" aria-hidden="true"></div><span class="mystery-label" id="rating-member">匿名候选</span><span class="style-label" id="rating-group">身份隐藏</span></div></article>
-      <div class="score-grid" aria-label="选择心动程度">
-        <button class="score-button" type="button" data-first-score="1"><span class="score-icon">○</span><span>无感</span></button>
-        <button class="score-button" type="button" data-first-score="2"><span class="score-icon">◔</span><span>有点帅</span></button>
-        <button class="score-button" type="button" data-first-score="3"><span class="score-icon">♥</span><span>心动</span></button>
-        <button class="score-button" type="button" data-first-score="4"><span class="score-icon">♥♥</span><span>本命</span></button>
-      </div>
-      <p class="rating-status" id="rating-status" aria-live="polite"></p>
+    <section class="screen wall-screen" data-screen="wall" aria-labelledby="wall-title">
+      <header class="topbar"><button class="icon-button" type="button" data-action="wall-prev" aria-label="上一屏">←</button><div class="progress-wrap"><div class="progress-label"><span id="wall-current">01</span><span id="wall-total">/ 06</span></div><div class="progress-track" id="wall-track" role="progressbar" aria-label="照片墙进度"><div class="progress-fill" id="wall-fill"></div></div></div><button class="text-button" type="button" data-action="restart">重来</button></header>
+      <div class="round-chip">STEP 1 · 心动照片墙</div>
+      <header class="simple-header choice-header"><p class="eyebrow">一屏看八位，别想太久</p><h2 id="wall-title">先把有感觉的圈出来</h2><p class="playful-tip">点照片＝偷偷看另一面；点一下 ♡＝心动；双击 ♡＝“糟了，是本命”。</p></header>
+      <div class="wall-grid" id="wall-grid"></div>
+      <div class="wall-footer"><p id="wall-status" aria-live="polite"></p><button class="primary-button" id="wall-next" type="button" data-action="wall-next">下一墙，继续扫</button></div>
     </section>
 
-    <section class="screen style-screen" data-screen="style" aria-labelledby="style-title">
-      <header class="topbar">
-        <button class="icon-button" type="button" data-action="back-style" aria-label="返回上一位">←</button>
-        <div class="progress-wrap"><div class="progress-label"><span id="style-current">01</span><span id="style-total">/ 01</span></div><div class="progress-track" id="style-track" role="progressbar" aria-label="第二轮进度"><div class="progress-fill" id="style-fill"></div></div></div>
-        <button class="text-button" type="button" data-action="restart">重来</button>
-      </header>
-      <div class="round-chip">ROUND 2 · 双面复核</div>
-      <header class="simple-header"><p class="eyebrow" id="style-kicker">同一位匿名候选</p><h2 id="style-title">两种风格，分别有多心动？</h2><p>两张图分别选择；都喜欢、只中一张或都无感都可以。</p></header>
-      <div class="style-pair" id="style-pair"></div>
-      <p class="reaction-copy" id="style-reaction" aria-live="polite">请为两种风格分别做选择</p>
+    <section class="screen review-screen" data-screen="review" aria-labelledby="review-title">
+      <div class="round-chip">STEP 2 · 双图复核</div>
+      <header class="simple-header"><p class="eyebrow">第一眼心动，也要经得住第二眼</p><h2 id="review-title">留下真正对味的照片</h2><p>每位候选的两种风格同时出现。点照片选中或取消；至少保留 6 位，最多 14 位。</p></header>
+      <div class="review-grid" id="review-grid"></div><p class="reaction-copy" id="review-status" aria-live="polite"></p>
+      <button class="primary-button" id="confirm-review" type="button" data-action="confirm-review">确认这份心动相册</button>
+    </section>
+
+    <section class="screen review-screen" data-screen="second-chance" aria-labelledby="second-chance-title">
+      <div class="round-chip">STEP 3 · 第二面翻盘区</div>
+      <header class="simple-header"><p class="eyebrow">刚才没翻面的，现在还有一次机会</p><h2 id="second-chance-title">第二面，会不会突然心动？</h2><p>这里只出现第一轮没选、也没看过另一面的候选。点中任意照片即可让他翻盘；不心动也可以直接继续。</p></header>
+      <div class="review-grid" id="second-chance-grid"></div><p class="reaction-copy" id="second-chance-status" aria-live="polite"></p>
+      <button class="primary-button" id="confirm-second-chance" type="button" data-action="confirm-second-chance">收好翻盘结果</button>
     </section>
 
     <section class="screen roster-screen" data-screen="roster" aria-labelledby="roster-title">
-      <div class="round-chip">ROUND 3 · 名字复活赛</div>
-      <header class="simple-header"><p class="eyebrow">不看照片，再听一次直觉</p><h2 id="roster-title">从名字云里捞回几位遗珠</h2><p id="roster-copy">从未晋级成员中选择复活对象。</p></header>
-      <article class="name-poster"><div class="poster-top"><span>NAME CLOUD</span><b id="roster-ticket">0 张复活票</b></div><div class="name-grid" id="name-grid" aria-label="复活名字云"></div></article>
-      <p class="reaction-copy" id="roster-status" aria-live="polite"></p>
-      <button class="primary-button" id="confirm-roster" type="button" data-action="confirm-roster" disabled>带他们进入限时赛</button>
+      <div class="round-chip">STEP 4 · 名字复活云</div>
+      <header class="simple-header"><p class="eyebrow">照片退场，直觉返场</p><h2 id="roster-title">只凭名字捞回 2 位</h2><p id="roster-copy">给两位遗珠一张返场票。</p></header>
+      <article class="name-poster"><div class="poster-top"><span>NAME CLOUD</span><b id="roster-ticket">2 张复活票</b></div><div class="name-grid" id="name-grid" aria-label="复活名字云"></div></article>
+      <p class="reaction-copy" id="roster-status" aria-live="polite"></p><button class="primary-button" id="confirm-roster" type="button" data-action="confirm-roster" disabled>带他们进入抢位赛</button>
     </section>
 
-    <section class="screen timed-screen" data-screen="timed" aria-labelledby="timed-title">
-      <header class="topbar">
-        <span class="topbar-spacer" aria-hidden="true"></span>
-        <div class="progress-wrap"><div class="progress-label"><span id="timed-current">01</span><span id="timed-total">/ 01</span></div><div class="progress-track" id="timed-track" role="progressbar" aria-label="第四轮进度"><div class="progress-fill" id="timed-fill"></div></div></div>
-        <button class="text-button" type="button" data-action="restart">重来</button>
-      </header>
-      <div class="round-chip">ROUND 4 · 8 秒淘汰赛</div>
-      <header class="simple-header"><p class="eyebrow">随机对阵 · 败者淘汰</p><h2 id="timed-title">8 秒内，只留一个</h2><div class="timer-wrap"><span id="timer-label">8.0 秒</span><span class="timer-track"><i id="timer-fill"></i></span></div></header>
-      <div class="duel-grid" id="timed-grid"></div>
-      <p class="rating-status" id="timed-status" aria-live="polite"></p>
+    <section class="screen qualifier-screen" data-screen="qualifier" aria-labelledby="qualifier-title">
+      <header class="topbar"><span class="topbar-spacer"></span><div class="progress-wrap"><div class="progress-label"><span id="qualifier-current">01</span><span>/ 04</span></div><div class="progress-track" id="qualifier-track" role="progressbar" aria-label="抢位赛进度"><div class="progress-fill" id="qualifier-fill"></div></div></div><button class="text-button" type="button" data-action="restart">重来</button></header>
+      <div class="round-chip">STEP 5 · 四宫格抢位</div><header class="simple-header"><p class="eyebrow">每组最多四位，只留一个晋级位</p><h2 id="qualifier-title">四组抢位，缩减到最后 4 人</h2></header>
+      <div class="battle-grid" id="qualifier-grid"></div><p class="rating-status" id="qualifier-status" aria-live="polite"></p>
     </section>
 
-    <section class="screen revive-screen" data-screen="revive" aria-labelledby="revive-title">
-      <div class="round-chip">ROUND 4.5 · 败者复活</div>
-      <header class="simple-header"><p class="eyebrow">最后一张复活票</p><h2 id="revive-title">从刚刚的败者中捞回一位</h2><p>这一次没有分数，只问你舍不舍得。</p></header>
-      <div class="revive-grid" id="revive-grid"></div>
-      <button class="skip-button" type="button" data-action="skip-revive">不复活，直接守擂</button>
+    <section class="screen qualifier-screen" data-screen="post-revival" aria-labelledby="post-revival-title">
+      <div class="round-chip">BONUS · 淘汰区复活赛</div>
+      <header class="simple-header"><p class="eyebrow">刚刚离场的人，还有两张返场票</p><h2 id="post-revival-title">选 2 位回来抢四强席位</h2><p>他们会各自挑战一位暂定四强，挑战后仍留下最后 4 人。</p></header>
+      <div class="battle-grid" id="post-revival-grid"></div><p class="reaction-copy" id="post-revival-status" aria-live="polite"></p>
+      <button class="primary-button" id="confirm-post-revival" type="button" data-action="confirm-post-revival" disabled>让这两位回来挑战</button>
     </section>
 
-    <section class="screen gauntlet-screen" data-screen="gauntlet" aria-labelledby="gauntlet-title">
-      <header class="topbar">
-        <span class="topbar-spacer" aria-hidden="true"></span>
-        <div class="progress-wrap"><div class="progress-label"><span id="gauntlet-current">01</span><span id="gauntlet-total">/ 01</span></div><div class="progress-track" id="gauntlet-track" role="progressbar" aria-label="第五轮进度"><div class="progress-fill" id="gauntlet-fill"></div></div></div>
-        <button class="text-button" type="button" data-action="restart">重来</button>
-      </header>
-      <div class="round-chip">ROUND 5 · 终极守擂</div>
-      <header class="simple-header"><p class="eyebrow">现任擂主 VS 新挑战者</p><h2 id="gauntlet-title">谁能留在擂台上？</h2><p>每一场的胜者继续迎战下一位，直到无人可挑战。</p></header>
-      <div class="duel-grid" id="gauntlet-grid"></div>
-      <p class="rating-status" id="gauntlet-status" aria-live="polite"></p>
+    <section class="screen duel-screen" data-screen="duel" aria-labelledby="duel-title">
+      <div class="round-chip" id="duel-chip">半决赛</div><header class="simple-header"><p class="eyebrow" id="duel-kicker">最后四位</p><h2 id="duel-title">只能留下一位</h2><p id="duel-copy">现在，别犹豫。</p></header>
+      <div class="duel-grid" id="duel-grid"></div><p class="rating-status" id="duel-status" aria-live="polite"></p>
     </section>
 
     <section class="screen result-screen" data-screen="result" aria-labelledby="result-title">
       <header class="result-header"><p class="eyebrow">身份揭晓时刻</p><h2 id="result-title">你的终极心动冠军</h2><p id="result-subtitle"></p></header>
-      <article class="winner-card" id="winner-card"></article>
-      <section class="result-stats" id="result-stats" aria-label="你的心动特征"></section>
-      <section class="result-section"><div class="section-title-row"><h3>你的团体心动榜</h3><span>按人均心动值排序</span></div><div class="group-ranking" id="top-three-grid"></div></section>
+      <article class="winner-card" id="winner-card"></article><section class="result-stats" id="result-stats" aria-label="你的心动特征"></section>
+      <section class="result-section"><div class="section-title-row"><h3>最终心动前三名</h3><span>照片与身份揭晓</span></div><div class="top-three-grid" id="top-three"></div></section>
+      <section class="result-section" id="bias-section"><div class="section-title-row"><h3>你的本命收藏</h3><span>双击爱心留下的答案</span></div><div class="result-people-grid" id="bias-gallery"></div></section>
+      <section class="result-section"><div class="section-title-row"><h3>你的团体心动榜</h3><span>按人均心动值排序</span></div><div class="group-ranking" id="group-ranking"></div></section>
       <section class="insight-card"><p class="eyebrow">匿名审美报告</p><h3>你的心动开关是……</h3><p id="journey-copy"></p></section>
-      <div class="result-actions"><button class="primary-button" type="button" data-action="replay">重新开赛</button><button class="secondary-button" type="button" data-action="share">复制冠军结果</button><button class="secondary-button" type="button" data-action="home">返回首页</button><button class="clear-button" type="button" data-action="clear">清除本地记录</button></div>
+      <div class="result-actions"><button class="primary-button" type="button" data-action="replay">再测一次</button><button class="secondary-button" type="button" data-action="share">复制冠军结果</button><button class="secondary-button" type="button" data-action="home">返回首页</button><button class="clear-button" type="button" data-action="clear">清除本地记录</button></div>
       <p class="fine-print">结果仅代表本轮娱乐偏好。公开推广或商业使用前仍需确认照片版权与艺人肖像许可。</p>
     </section>
   </main>
   <div class="streak-toast" id="streak-toast" role="status" aria-live="polite"></div>
-  <script src="./data.js?v=12"></script>
-  <script src="./logic.js?v=12"></script>
-  <script src="./app.js?v=12"></script>
+  <script src="./data.js?v=15"></script><script src="./logic.js?v=15"></script><script src="./app.js?v=15"></script>
 </body>
 </html>

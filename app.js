@@ -1,7 +1,8 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'kpop-heart-pick-v15';
+  var STORAGE_KEY = 'kpop-heart-pick-v16';
+  var HISTORY_KEY = STORAGE_KEY + '-history';
   var PAGE_SIZE = 8;
   var MIN_WALL_PICKS = 8;
   var MAX_WALL_PICKS = 16;
@@ -13,6 +14,7 @@
   data.people.forEach(function (person) { peopleById[person.id] = person; });
   var screens = Array.prototype.slice.call(document.querySelectorAll('[data-screen]'));
   var state = createInitialState();
+  var historyStack = [];
   var isTransitioning = false;
   var lastShareText = '';
 
@@ -47,18 +49,24 @@
   }
 
   function saveState() {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { /* optional */ }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); window.localStorage.setItem(HISTORY_KEY, JSON.stringify(historyStack)); } catch (error) { /* optional */ }
   }
 
   function loadState() {
     try {
       var saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
-      if (saved && Array.isArray(saved.wallOrder) && saved.wallOrder.length === data.people.length) { state = saved; return true; }
+      if (saved && Array.isArray(saved.wallOrder) && saved.wallOrder.length === data.people.length) { state = saved; historyStack = JSON.parse(window.localStorage.getItem(HISTORY_KEY)) || []; return true; }
     } catch (error) { /* ignore */ }
     return false;
   }
 
   function photosFor(personId) { return logic.photosFor(data, personId); }
+  function pushHistory() { historyStack.push(JSON.parse(JSON.stringify(state))); if (historyStack.length > 30) historyStack.shift(); saveState(); }
+  function goBack() {
+    if (isTransitioning) return showToast('这一轮正在锁定，稍等一下再返回');
+    if (!historyStack.length) return showToast('已经是第一步啦');
+    state = historyStack.pop(); isTransitioning = false; saveState(); renderPhase();
+  }
   function unique(items) { return items.filter(function (item, index, all) { return all.indexOf(item) === index; }); }
   function selectedWallIds() { return state.wallOrder.filter(function (id) { return state.wallPicks[id] >= 3; }); }
   function reviewAdvancedIds() { return state.reviewIds.filter(function (id) { return (state.reviewSelections[id] || []).length > 0; }); }
@@ -76,9 +84,10 @@
   }
 
   function startTournament() {
-    isTransitioning = false; state = createInitialState();
+    isTransitioning = false; state = createInitialState(); historyStack = [];
     state.wallOrder = logic.shuffle(data.people).map(function (person) { return person.id; });
     state.firstRound = state.wallOrder.map(function (personId) { return { personId: personId, photo: photosFor(personId)[0] }; });
+    pushHistory();
     renderWall();
   }
 
@@ -92,7 +101,7 @@
     var count = selectedWallIds().length;
     els.wallStatus.textContent = '心动席位 ' + count + ' / ' + MAX_WALL_PICKS + (count < MIN_WALL_PICKS ? ' · 扫完至少留下 ' + MIN_WALL_PICKS + ' 位' : ' · 已达到复核门槛');
     els.wallNext.textContent = state.wallPage === totalPages - 1 ? '进入双图复核' : '下一墙，继续扫';
-    document.querySelector('[data-action="wall-prev"]').disabled = state.wallPage === 0;
+    document.querySelector('[data-action="wall-prev"]').disabled = false;
   }
 
   function buildWallCard(personId) {
@@ -136,6 +145,7 @@
     if (state.wallPage < totalPages - 1) { state.wallPage += 1; return renderWall(); }
     var selected = selectedWallIds();
     if (selected.length < MIN_WALL_PICKS) return showToast('雷达还差 ' + (MIN_WALL_PICKS - selected.length) + ' 次心动，回去再捞几位吧');
+    pushHistory();
     prepareReview(selected);
   }
 
@@ -181,7 +191,7 @@
   function confirmReview() {
     var advanced = reviewAdvancedIds();
     if (advanced.length < MIN_REVIEW_ADVANCERS || advanced.length > MAX_REVIEW_ADVANCERS) return showToast('请把晋级人数控制在 ' + MIN_REVIEW_ADVANCERS + '–' + MAX_REVIEW_ADVANCERS + ' 位');
-    state.reviewAdvanced = advanced; state.styleAnswers = {};
+    pushHistory(); state.reviewAdvanced = advanced; state.styleAnswers = {};
     state.reviewIds.forEach(function (id) {
       state.styleAnswers[id] = {}; var selected = state.reviewSelections[id] || [];
       photosFor(id).slice(0, 2).forEach(function (photo) { state.styleAnswers[id][photo.id] = selected.indexOf(photo.id) >= 0 ? (state.wallPicks[id] === 4 ? 4 : 3) : 1; });
@@ -231,6 +241,7 @@
   }
 
   function confirmSecondChance() {
+    pushHistory();
     state.secondChanceAdvanced = secondChanceAdvancedIds();
     state.secondChanceIds.forEach(function (id) {
       state.styleAnswers[id] = state.styleAnswers[id] || {}; var selected = state.secondChanceSelections[id] || [];
@@ -262,6 +273,7 @@
   function prepareQualifier() {
     var entrants = logic.shuffle(unique(photoAdvancedIds().concat(state.rosterSelected)));
     if (entrants.length < 8 || entrants.length > 16) return showToast('抢位赛需要 8–16 位候选');
+    pushHistory();
     state.qualifierGroups = [[], [], [], []]; entrants.forEach(function (id, index) { state.qualifierGroups[index % 4].push(id); });
     state.qualifierIndex = 0; state.qualifierWinners = []; renderQualifier();
   }
@@ -282,7 +294,7 @@
   }
 
   function chooseQualifier(personId) {
-    if (isTransitioning) return; isTransitioning = true; state.qualifierWinners.push(personId);
+    if (isTransitioning) return; pushHistory(); isTransitioning = true; state.qualifierWinners.push(personId);
     var chosenPhoto = preferredPhoto(personId); state.styleAnswers[personId] = state.styleAnswers[personId] || {};
     if (!Object.keys(state.styleAnswers[personId]).some(function (photoId) { return state.styleAnswers[personId][photoId] >= 3; })) state.styleAnswers[personId][chosenPhoto.id] = 3;
     Array.prototype.slice.call(els.qualifierGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
@@ -313,6 +325,7 @@
   }
 
   function prepareRevivalChallenges() {
+    pushHistory();
     state.postRevivalSelected.forEach(function (id) {
       var photo = preferredPhoto(id); state.styleAnswers[id] = state.styleAnswers[id] || {};
       if (!Object.keys(state.styleAnswers[id]).some(function (photoId) { return state.styleAnswers[id][photoId] >= 3; })) state.styleAnswers[id][photo.id] = 3;
@@ -330,7 +343,7 @@
   }
 
   function chooseRevivalChallenge(personId) {
-    if (isTransitioning) return; isTransitioning = true; state.revivalWinners.push(personId);
+    if (isTransitioning) return; pushHistory(); isTransitioning = true; state.revivalWinners.push(personId);
     Array.prototype.slice.call(els.duelGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
     els.duelStatus.textContent = '四强席位锁定'; saveState(); window.setTimeout(function () { state.revivalIndex += 1; renderRevivalChallenge(); }, 520);
   }
@@ -350,7 +363,7 @@
   }
 
   function chooseDuel(personId) {
-    if (isTransitioning) return; isTransitioning = true;
+    if (isTransitioning) return; pushHistory(); isTransitioning = true;
     var isFinal = state.semifinalIndex >= state.semifinalDuels.length;
     Array.prototype.slice.call(els.duelGrid.children).forEach(function (card) { card.disabled = true; card.classList.toggle('is-selected', card.getAttribute('data-person-id') === personId); });
     if (isFinal) { state.finalists = state.semifinalWinners.slice(); state.championId = personId; els.duelStatus.textContent = '答案锁定，正在揭晓身份…'; saveState(); return window.setTimeout(showResults, 650); }
@@ -358,7 +371,7 @@
     window.setTimeout(function () { state.semifinalIndex += 1; renderDuel(); }, 520);
   }
 
-  function showResults() { state.completedAt = new Date().toISOString(); renderResults(); showScreen('result'); }
+  function showResults() { isTransitioning = false; state.completedAt = new Date().toISOString(); renderResults(); showScreen('result'); }
 
   function renderResults() {
     var champion = peopleById[state.championId]; if (!champion) return;
@@ -401,7 +414,7 @@
 
   function showToast(message) { els.toast.textContent = message; els.toast.classList.add('is-visible'); window.setTimeout(function () { els.toast.classList.remove('is-visible'); }, 1700); }
   function shareResult() { var text = lastShareText + '\n' + window.location.href.split('?')[0]; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { showToast('已复制冠军结果'); }); else showToast('请截图分享这份心动答案'); }
-  function clearSaved() { try { window.localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ } state = createInitialState(); showScreen('intro'); }
+  function clearSaved() { try { window.localStorage.removeItem(STORAGE_KEY); window.localStorage.removeItem(HISTORY_KEY); } catch (error) { /* no-op */ } state = createInitialState(); historyStack = []; showScreen('intro'); }
 
   function renderPhase() {
     if (state.phase === 'wall') renderWall(); else if (state.phase === 'review') renderReview(); else if (state.phase === 'second-chance') renderSecondChance(); else if (state.phase === 'roster') renderRoster(); else if (state.phase === 'qualifier') renderQualifier(); else if (state.phase === 'post-revival') renderPostRevival(); else if (state.phase === 'duel' && state.revivalDuels.length && state.revivalIndex < state.revivalDuels.length && state.finalFour.length < 4) renderRevivalChallenge(); else if (state.phase === 'duel') renderDuel(); else if (state.phase === 'result') { renderResults(); showScreen('result'); } else showScreen('intro');
@@ -411,6 +424,7 @@
     var actionButton = event.target.closest('[data-action]'); if (!actionButton) return; var action = actionButton.getAttribute('data-action');
     if (action === 'start' || action === 'restart' || action === 'replay') startTournament();
     else if (action === 'wall-prev' && state.wallPage > 0) { state.wallPage -= 1; renderWall(); }
+    else if (action === 'wall-prev' || action === 'go-back') goBack();
     else if (action === 'wall-next') nextWall(); else if (action === 'confirm-review') confirmReview(); else if (action === 'confirm-second-chance') confirmSecondChance(); else if (action === 'confirm-roster') prepareQualifier(); else if (action === 'confirm-post-revival') prepareRevivalChallenges();
     else if (action === 'home') showScreen('intro'); else if (action === 'clear') clearSaved(); else if (action === 'share') shareResult();
   });

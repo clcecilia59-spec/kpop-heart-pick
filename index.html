@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f1eb">
   <title>你的 K-pop 心动取向</title>
-  <link rel="stylesheet" href="./style.css?v=15">
+  <link rel="stylesheet" href="./style.css?v=16">
 </head>
 <body>
   <main class="app-shell" id="app">
@@ -26,6 +26,7 @@
     </section>
 
     <section class="screen review-screen" data-screen="review" aria-labelledby="review-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回上一步</button>
       <div class="round-chip">STEP 2 · 双图复核</div>
       <header class="simple-header"><p class="eyebrow">第一眼心动，也要经得住第二眼</p><h2 id="review-title">留下真正对味的照片</h2><p>每位候选的两种风格同时出现。点照片选中或取消；至少保留 6 位，最多 14 位。</p></header>
       <div class="review-grid" id="review-grid"></div><p class="reaction-copy" id="review-status" aria-live="polite"></p>
@@ -33,6 +34,7 @@
     </section>
 
     <section class="screen review-screen" data-screen="second-chance" aria-labelledby="second-chance-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回上一步</button>
       <div class="round-chip">STEP 3 · 第二面翻盘区</div>
       <header class="simple-header"><p class="eyebrow">刚才没翻面的，现在还有一次机会</p><h2 id="second-chance-title">第二面，会不会突然心动？</h2><p>这里只出现第一轮没选、也没看过另一面的候选。点中任意照片即可让他翻盘；不心动也可以直接继续。</p></header>
       <div class="review-grid" id="second-chance-grid"></div><p class="reaction-copy" id="second-chance-status" aria-live="polite"></p>
@@ -40,19 +42,21 @@
     </section>
 
     <section class="screen roster-screen" data-screen="roster" aria-labelledby="roster-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回上一步</button>
       <div class="round-chip">STEP 4 · 名字复活云</div>
-      <header class="simple-header"><p class="eyebrow">照片退场，直觉返场</p><h2 id="roster-title">只凭名字捞回 2 位</h2><p id="roster-copy">给两位遗珠一张返场票。</p></header>
+      <header class="simple-header"><p class="eyebrow">照片退场，直觉返场</p><h2 id="roster-title">只凭名字捞回 2 位</h2><p id="roster-copy">给两位遗珠一张返场票。</p><p class="name-luck-tip">名字也有眼缘：别分析太久，哪个名字先抓住你，就把票投给谁。</p></header>
       <article class="name-poster"><div class="poster-top"><span>NAME CLOUD</span><b id="roster-ticket">2 张复活票</b></div><div class="name-grid" id="name-grid" aria-label="复活名字云"></div></article>
       <p class="reaction-copy" id="roster-status" aria-live="polite"></p><button class="primary-button" id="confirm-roster" type="button" data-action="confirm-roster" disabled>带他们进入抢位赛</button>
     </section>
 
     <section class="screen qualifier-screen" data-screen="qualifier" aria-labelledby="qualifier-title">
-      <header class="topbar"><span class="topbar-spacer"></span><div class="progress-wrap"><div class="progress-label"><span id="qualifier-current">01</span><span>/ 04</span></div><div class="progress-track" id="qualifier-track" role="progressbar" aria-label="抢位赛进度"><div class="progress-fill" id="qualifier-fill"></div></div></div><button class="text-button" type="button" data-action="restart">重来</button></header>
+      <header class="topbar"><button class="icon-button" type="button" data-action="go-back" aria-label="返回上一步">←</button><div class="progress-wrap"><div class="progress-label"><span id="qualifier-current">01</span><span>/ 04</span></div><div class="progress-track" id="qualifier-track" role="progressbar" aria-label="抢位赛进度"><div class="progress-fill" id="qualifier-fill"></div></div></div><button class="text-button" type="button" data-action="restart">重来</button></header>
       <div class="round-chip">STEP 5 · 四宫格抢位</div><header class="simple-header"><p class="eyebrow">每组最多四位，只留一个晋级位</p><h2 id="qualifier-title">四组抢位，缩减到最后 4 人</h2></header>
       <div class="battle-grid" id="qualifier-grid"></div><p class="rating-status" id="qualifier-status" aria-live="polite"></p>
     </section>
 
     <section class="screen qualifier-screen" data-screen="post-revival" aria-labelledby="post-revival-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回上一步</button>
       <div class="round-chip">BONUS · 淘汰区复活赛</div>
       <header class="simple-header"><p class="eyebrow">刚刚离场的人，还有两张返场票</p><h2 id="post-revival-title">选 2 位回来抢四强席位</h2><p>他们会各自挑战一位暂定四强，挑战后仍留下最后 4 人。</p></header>
       <div class="battle-grid" id="post-revival-grid"></div><p class="reaction-copy" id="post-revival-status" aria-live="polite"></p>
@@ -60,11 +64,13 @@
     </section>
 
     <section class="screen duel-screen" data-screen="duel" aria-labelledby="duel-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回上一步</button>
       <div class="round-chip" id="duel-chip">半决赛</div><header class="simple-header"><p class="eyebrow" id="duel-kicker">最后四位</p><h2 id="duel-title">只能留下一位</h2><p id="duel-copy">现在，别犹豫。</p></header>
       <div class="duel-grid" id="duel-grid"></div><p class="rating-status" id="duel-status" aria-live="polite"></p>
     </section>
 
     <section class="screen result-screen" data-screen="result" aria-labelledby="result-title">
+      <button class="step-back" type="button" data-action="go-back">← 返回冠军战</button>
       <header class="result-header"><p class="eyebrow">身份揭晓时刻</p><h2 id="result-title">你的终极心动冠军</h2><p id="result-subtitle"></p></header>
       <article class="winner-card" id="winner-card"></article><section class="result-stats" id="result-stats" aria-label="你的心动特征"></section>
       <section class="result-section"><div class="section-title-row"><h3>最终心动前三名</h3><span>照片与身份揭晓</span></div><div class="top-three-grid" id="top-three"></div></section>
@@ -76,6 +82,6 @@
     </section>
   </main>
   <div class="streak-toast" id="streak-toast" role="status" aria-live="polite"></div>
-  <script src="./data.js?v=15"></script><script src="./logic.js?v=15"></script><script src="./app.js?v=15"></script>
+  <script src="./data.js?v=16"></script><script src="./logic.js?v=16"></script><script src="./app.js?v=16"></script>
 </body>
 </html>

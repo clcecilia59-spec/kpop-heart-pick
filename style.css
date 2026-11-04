@@ -249,7 +249,9 @@ button:disabled { opacity: 0.28; }
   .mini-score button { font-size: 9px; }
 }
 
-/* v15 · fast photo-wall flow */
+/* v16 · fast photo-wall flow */
+.step-back { display: inline-flex; align-items: center; min-height: 38px; margin: 0 0 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.52); font-size: 12px; font-weight: 700; }
+.name-luck-tip { padding: 10px 13px; border: 1px dashed rgba(243,201,86,.65); border-radius: 15px; color: #7a5d12 !important; background: rgba(243,201,86,.14); font-weight: 700; }
 .playful-tip { padding: 12px 14px; border: 1px dashed rgba(239,75,104,.38); border-radius: 16px; color: var(--hot-dark) !important; background: rgba(239,75,104,.07); font-weight: 700; }
 .wall-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .wall-card { min-width: 0; overflow: hidden; border-radius: 20px; background: var(--card); box-shadow: 0 10px 28px rgba(51,37,23,.1); }
